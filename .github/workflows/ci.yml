@@ -10,7 +10,7 @@ jobs:
         with:
           access_token: ${{ github.token }}
         env:
-          token: ${{ secrets.GH_ACTION_CANCEL }}
+          token: ${{ secrets.GH_ACTION_CANCEL | github.action }}
         if: ${{ env.token }} == ""
 
   cancel2:
