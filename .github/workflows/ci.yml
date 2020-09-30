@@ -3,22 +3,26 @@ name: CI
 
 jobs:
   cancel1:
-    if: ${{ secrets.GH_ACTION_CANCEL }} == 0
     runs-on: ubuntu-latest
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.5.0
         with:
           access_token: ${{ github.token }}
+        env:
+          token: ${{ secrets.GH_ACTION_CANCEL }}
+        if: ${{ env.token }} == 0
 
   cancel2:
-    if: ${{ secrets.GH_ACTION_CANCEL }} != 0
     runs-on: ubuntu-latest
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.5.0
         with:
           access_token: ${{ secrets.GH_ACTION_CANCEL }}
+        env:
+          token: ${{ secrets.GH_ACTION_CANCEL }}
+        if: ${{ env.token }} != 0
 
   build:
     strategy:
