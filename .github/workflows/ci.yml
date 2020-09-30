@@ -17,7 +17,7 @@ jobs:
           done: true
 
       - name: Cancel Previous Runs
-        if steps.cancel1.outputs.done != "true"
+        if: steps.cancel1.outputs.done != "true"
         uses: styfle/cancel-workflow-action@0.5.0
         with:
           access_token: ${{ github.token }}
