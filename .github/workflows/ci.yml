@@ -9,15 +9,12 @@ jobs:
         env:
           token: ${{ secrets.GH_ACTION_CANCEL }}
         if: env.token
-        id: cancel1
         uses: styfle/cancel-workflow-action@0.5.0
         with:
           access_token: ${{ secrets.GH_ACTION_CANCEL }}
-        outputs:
-          done: true
 
       - name: Cancel Previous Runs
-        if: steps.cancel1.outputs.done != "true"
+        if: ${{ failure() }}
         uses: styfle/cancel-workflow-action@0.5.0
         with:
           access_token: ${{ github.token }}
