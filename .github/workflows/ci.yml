@@ -3,7 +3,9 @@ name: CI
 
 jobs:
   cancel1:
-    if: ${{ secrets.GH_ACTION_CANCEL == 0 }}
+    env:
+      token: ${{ secrets.GH_ACTION_CANCEL }}
+    if: ${{ env.token == 0 }}
     runs-on: ubuntu-latest
     steps:
       - name: Cancel Previous Runs
@@ -12,7 +14,9 @@ jobs:
           access_token: ${{ github.token }}
 
   cancel2:
-    if: ${{ secrets.GH_ACTION_CANCEL != 0 }}
+    env:
+      token: ${{ secrets.GH_ACTION_CANCEL }}
+    if: ${{ env.token != 0 }}
     runs-on: ubuntu-latest
     steps:
       - name: Cancel Previous Runs
