@@ -87,8 +87,8 @@ if(NOT CaDiCaL_FOUND_SYSTEM)
 
   #set(CaDiCaL_VERSION "rel-2.0.0")
   #set(CaDiCaL_CHECKSUM "9afe5f6439442d854e56fc1fac3244ce241dbb490735939def8fd03584f89331")
-  set(CaDiCaL_VERSION "c675a01")
-  set(CaDiCaL_CHECKSUM "636a4f66314ebf78a7b4575833232924f5a1106157d12d1307b298756b777539")
+  set(CaDiCaL_VERSION "73873e3")
+  set(CaDiCaL_CHECKSUM "2016b20ba172099d34541f2eb83e3aae4b3cd474b3eab06cb5260d39af567dfe")
 
   # avoid configure script and instantiate the makefile manually the configure
   # scripts unnecessarily fails for cross compilation thus we do the bare
