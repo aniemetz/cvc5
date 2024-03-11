@@ -66,7 +66,7 @@ CadicalVar toCadicalVar(SatVariable var) { return var; }
 }  // namespace helper functions
 
 class CadicalPropagator : public CaDiCaL::ExternalPropagator,
-                          public CaDiCaL::Observer
+                          public CaDiCaL::FixedAssignmentListener
 {
  public:
   CadicalPropagator(prop::TheoryProxy* proxy,
@@ -1020,8 +1020,8 @@ void CadicalSolver::init()
   {
     d_solver->set("walk", 0);
     d_solver->set("lucky", 0);
-    d_solver->set("ilb", 0);
-    d_solver->set("ilbassumptions", 0);
+    d_solver->set("ilb", 1);
+    d_solver->set("ilbassumptions", 1);
     //d_solver->set("log", 1);
   }
 
@@ -1227,7 +1227,7 @@ void CadicalSolver::initialize(context::Context* context,
   d_proxy = theoryProxy;
   d_propagator.reset(new CadicalPropagator(theoryProxy, context, *d_solver));
   init();
-  d_solver->connect_observer(d_propagator.get());
+  d_solver->connect_fixed_listener(d_propagator.get());
   d_solver->connect_external_propagator(d_propagator.get());
 }
 
