@@ -16,6 +16,8 @@
  * \todo document this file
  */
 #include "theory/fp/theory_fp_utils.h"
+#include "expr/skolem_manager.h"
+#include "expr/sort_to_term.h"
 
 namespace cvc5::internal {
 namespace theory {
@@ -44,6 +46,51 @@ Integer getCardinality(const TypeNode& type)
                * (Integer(2).pow(fps.exponentWidth()) - Integer(1));
 }
 
+Node minMaxUF(NodeManager* nm, TNode node)
+{
+  Kind kind = node.getKind();
+  Assert(kind == Kind::FLOATINGPOINT_MIN
+         || kind == Kind::FLOATINGPOINT_MIN_TOTAL
+         || kind == Kind::FLOATINGPOINT_MAX
+         || kind == Kind::FLOATINGPOINT_MAX_TOTAL);
+
+  TypeNode type = node.getType();
+  Assert(type.getKind() == Kind::FLOATINGPOINT_TYPE);
+
+  return nm->mkNode(Kind::APPLY_UF,
+                    nm->getSkolemManager()->mkSkolemFunction(
+                        kind == Kind::FLOATINGPOINT_MIN
+                                || kind == Kind::FLOATINGPOINT_MIN_TOTAL
+                            ? SkolemId::FP_MIN_ZERO
+                            : SkolemId::FP_MAX_ZERO,
+                        {nm->mkConst(SortToTerm(type))}),
+                    node[0],
+                    node[1]);
+}
+
+Node ubvSbvUF(NodeManager* nm, TNode node)
+{
+  Kind kind = node.getKind();
+  Assert(kind == Kind::FLOATINGPOINT_TO_UBV
+         || kind == Kind::FLOATINGPOINT_TO_UBV_TOTAL
+         || kind == Kind::FLOATINGPOINT_TO_SBV
+         || kind == Kind::FLOATINGPOINT_TO_SBV_TOTAL);
+
+  TypeNode type = node.getType();
+  Assert(type.getKind() == Kind::BITVECTOR_TYPE);
+
+  return nm->mkNode(Kind::APPLY_UF,
+                    nm->getSkolemManager()->mkSkolemFunction(
+                        kind == Kind::FLOATINGPOINT_TO_SBV
+                                || kind == Kind::FLOATINGPOINT_TO_SBV_TOTAL
+                            ? SkolemId::FP_TO_SBV
+                            : SkolemId::FP_TO_UBV,
+                        {nm->mkConst(SortToTerm(type)),
+                         nm->mkConst(SortToTerm(node[0].getType())),
+                         nm->mkConst(SortToTerm(node[1].getType()))}),
+                    node[0],
+                    node[1]);
+}
 }  // namespace utils
 }  // namespace fp
 }  // namespace theory

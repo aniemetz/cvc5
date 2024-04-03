@@ -549,6 +549,36 @@ TypeNode SkolemManager::getTypeFor(SkolemId id,
       TypeNode t = cacheVals[1].getConst<SortToTerm>().getType();
       return nm->mkSelectorType(dtt, t);
     }
+    // fp skolems
+    case SkolemId::FP_MIN_ZERO:
+    case SkolemId::FP_MAX_ZERO:
+    {
+      Assert(cacheVals.size() == 1);
+      Assert(cacheVals[0].getKind() == Kind::SORT_TO_TERM);
+      TypeNode type = cacheVals[0].getConst<SortToTerm>().getType();
+      Assert(type.isFloatingPoint());
+      uint64_t size = type.getFloatingPointExponentSize()
+                      + type.getFloatingPointSignificandSize();
+      TypeNode bvtype = nm->mkBitVectorType(size);
+      //return nm->mkFunctionType({bvtype, bvtype}, nm->mkBitVectorType(1));
+       return nm->mkFunctionType({type, type}, nm->mkBitVectorType(1));
+    }
+    case SkolemId::FP_TO_SBV:
+    case SkolemId::FP_TO_UBV:
+    {
+      Assert(cacheVals.size() == 3);
+      Assert(cacheVals[0].getKind() == Kind::SORT_TO_TERM);
+      TypeNode bvtype = cacheVals[0].getConst<SortToTerm>().getType();
+      Assert(bvtype.isBitVector());
+      Assert(cacheVals[1].getKind() == Kind::SORT_TO_TERM);
+      TypeNode rmtype = cacheVals[1].getConst<SortToTerm>().getType();
+      Assert(rmtype.isRoundingMode());
+      Assert(cacheVals[2].getKind() == Kind::SORT_TO_TERM);
+      TypeNode fptype = cacheVals[2].getConst<SortToTerm>().getType();
+      Assert(fptype.isFloatingPoint());
+      return nm->mkFunctionType({rmtype, fptype}, bvtype);
+    }
+    //
     default: break;
   }
   TypeNode ret;

@@ -168,11 +168,12 @@ class SkolemManager
    * method may construct a canonical (first-order) skolem using this method
    * as well.
    *
-   * @param id The identifier of the skolem function
-   * @param cacheVal A cache value. The returned skolem function will be
-   * unique to the pair (id, cacheVal). This value is required, for instance,
-   * for skolem functions that are in fact families of skolem functions,
-   * e.g. the wrongly applied case of selectors.
+   * @param id       The identifier of the skolem function
+   * @param cacheVal A cache value. The returned skolem function will be unique
+   *                 to the pair (id, cacheVal). This value is required, for
+   *                 instance, for skolem functions that are in fact families
+   *                 of skolem functions, e.g., the wrongly applied case of
+   *                 selectors.
    * @return The skolem function.
    */
   Node mkSkolemFunction(SkolemId id, Node cacheVal = Node::null());

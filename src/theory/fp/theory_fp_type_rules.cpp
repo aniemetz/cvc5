@@ -332,6 +332,9 @@ TypeNode FloatingPointPartialOperationTypeRule::computeType(
       }
     }
 
+    if (n.getKind() != Kind::FLOATINGPOINT_MIN_TOTAL
+        && n.getKind() != Kind::FLOATINGPOINT_MAX_TOTAL)
+    {
     TypeNode UFValueType = n[children - 1].getTypeOrNull();
 
     if (!UFValueType.isMaybeKind(Kind::BITVECTOR_TYPE)
@@ -344,6 +347,7 @@ TypeNode FloatingPointPartialOperationTypeRule::computeType(
                "bit-vector of length 1";
       }
       return TypeNode::null();
+    }
     }
   }
 

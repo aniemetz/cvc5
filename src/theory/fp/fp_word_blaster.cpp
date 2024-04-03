@@ -34,6 +34,7 @@
 #include "symfpu/utils/numberOfRoundingModes.h"
 #include "symfpu/utils/properties.h"
 #include "theory/theory.h"  // theory.h Only needed for the leaf test
+#include "theory/fp/theory_fp_utils.h"
 #include "util/floatingpoint.h"
 #include "util/floatingpoint_literal_symfpu.h"
 
@@ -992,23 +993,23 @@ Node FpWordBlaster::wordBlast(TNode node)
             case Kind::FLOATINGPOINT_MAX_TOTAL:
               Assert(d_fpMap.find(cur[0]) != d_fpMap.end());
               Assert(d_fpMap.find(cur[1]) != d_fpMap.end());
-              Assert(cur[2].getType().isBitVector());
-              d_fpMap.insert(cur,
-                             symfpu::max<traits>(fpt(t),
-                                                 (*d_fpMap.find(cur[0])).second,
-                                                 (*d_fpMap.find(cur[1])).second,
-                                                 prop(cur[2])));
+              d_fpMap.insert(
+                  cur,
+                  symfpu::max<traits>(fpt(t),
+                                      d_fpMap.find(cur[0])->second,
+                                      d_fpMap.find(cur[1])->second,
+                                      prop(utils::minMaxUF(nm, cur))));
               break;
 
             case Kind::FLOATINGPOINT_MIN_TOTAL:
               Assert(d_fpMap.find(cur[0]) != d_fpMap.end());
               Assert(d_fpMap.find(cur[1]) != d_fpMap.end());
-              Assert(cur[2].getType().isBitVector());
-              d_fpMap.insert(cur,
-                             symfpu::min<traits>(fpt(t),
-                                                 (*d_fpMap.find(cur[0])).second,
-                                                 (*d_fpMap.find(cur[1])).second,
-                                                 prop(cur[2])));
+              d_fpMap.insert(
+                  cur,
+                  symfpu::min<traits>(fpt(t),
+                                      d_fpMap.find(cur[0])->second,
+                                      d_fpMap.find(cur[1])->second,
+                                      prop(utils::minMaxUF(nm, cur))));
               break;
 
             case Kind::FLOATINGPOINT_ADD:
@@ -1240,10 +1241,10 @@ Node FpWordBlaster::wordBlast(TNode node)
           d_ubvMap.insert(
               cur,
               symfpu::convertFloatToUBV<traits>(fpt(cur[1].getType()),
-                                                (*d_rmMap.find(cur[0])).second,
-                                                (*d_fpMap.find(cur[1])).second,
+                                                d_rmMap.find(cur[0])->second,
+                                                d_fpMap.find(cur[1])->second,
                                                 info.d_bv_size,
-                                                ubv(cur[2])));
+                                                ubv(utils::ubvSbvUF(nm, cur))));
         }
         else if (kind == Kind::FLOATINGPOINT_TO_SBV_TOTAL)
         {
@@ -1255,10 +1256,10 @@ Node FpWordBlaster::wordBlast(TNode node)
           d_sbvMap.insert(
               cur,
               symfpu::convertFloatToSBV<traits>(fpt(cur[1].getType()),
-                                                (*d_rmMap.find(cur[0])).second,
-                                                (*d_fpMap.find(cur[1])).second,
+                                                d_rmMap.find(cur[0])->second,
+                                                d_fpMap.find(cur[1])->second,
                                                 info.d_bv_size,
-                                                sbv(cur[2])));
+                                                sbv(utils::ubvSbvUF(nm, cur))));
         }
         // else do nothing
       }

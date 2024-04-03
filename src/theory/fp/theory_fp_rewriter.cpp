@@ -574,73 +574,31 @@ RewriteResponse max(TNode node, bool isPreRewrite)
 RewriteResponse minTotal(TNode node, bool isPreRewrite)
 {
   Assert(node.getKind() == Kind::FLOATINGPOINT_MIN_TOTAL);
-  Assert(node.getNumChildren() == 3);
+  Assert(node.getNumChildren() == 2);
 
-  FloatingPoint arg1(node[0].getConst<FloatingPoint>());
-  FloatingPoint arg2(node[1].getConst<FloatingPoint>());
+  FloatingPoint fp0(node[0].getConst<FloatingPoint>());
+  FloatingPoint fp1(node[1].getConst<FloatingPoint>());
 
-  Assert(arg1.getSize() == arg2.getSize());
+  Assert(fp0.getSize() == fp1.getSize());
 
-  // Can be called with the third argument non-constant
-  if (node[2].getMetaKind() == kind::metakind::CONSTANT)
-  {
-    BitVector arg3(node[2].getConst<BitVector>());
-
-    FloatingPoint folded(arg1.minTotal(arg2, arg3.isBitSet(0)));
-    Node lit = NodeManager::currentNM()->mkConst(folded);
-    return RewriteResponse(REWRITE_DONE, lit);
-  }
-  else
-  {
-    FloatingPoint::PartialFloatingPoint res(arg1.min(arg2));
-
-    if (res.second)
-    {
-      Node lit = NodeManager::currentNM()->mkConst(res.first);
-      return RewriteResponse(REWRITE_DONE, lit);
-    }
-    else
-    {
-      // Can't constant fold the underspecified case
-      return RewriteResponse(REWRITE_DONE, node);
-    }
-  }
+  return RewriteResponse(REWRITE_DONE,
+                         NodeManager::currentNM()->mkConst(
+                             FloatingPoint(fp0.minTotal(fp1, true))));
 }
 
 RewriteResponse maxTotal(TNode node, bool isPreRewrite)
 {
   Assert(node.getKind() == Kind::FLOATINGPOINT_MAX_TOTAL);
-  Assert(node.getNumChildren() == 3);
+  Assert(node.getNumChildren() == 2);
 
-  FloatingPoint arg1(node[0].getConst<FloatingPoint>());
-  FloatingPoint arg2(node[1].getConst<FloatingPoint>());
+  FloatingPoint fp0(node[0].getConst<FloatingPoint>());
+  FloatingPoint fp1(node[1].getConst<FloatingPoint>());
 
-  Assert(arg1.getSize() == arg2.getSize());
+  Assert(fp0.getSize() == fp1.getSize());
 
-  // Can be called with the third argument non-constant
-  if (node[2].getMetaKind() == kind::metakind::CONSTANT)
-  {
-    BitVector arg3(node[2].getConst<BitVector>());
-
-    FloatingPoint folded(arg1.maxTotal(arg2, arg3.isBitSet(0)));
-    Node lit = NodeManager::currentNM()->mkConst(folded);
-    return RewriteResponse(REWRITE_DONE, lit);
-  }
-  else
-  {
-    FloatingPoint::PartialFloatingPoint res(arg1.max(arg2));
-
-    if (res.second)
-    {
-      Node lit = NodeManager::currentNM()->mkConst(res.first);
-      return RewriteResponse(REWRITE_DONE, lit);
-    }
-    else
-    {
-      // Can't constant fold the underspecified case
-      return RewriteResponse(REWRITE_DONE, node);
-    }
-  }
+  return RewriteResponse(REWRITE_DONE,
+                         NodeManager::currentNM()->mkConst(
+                             FloatingPoint(fp0.maxTotal(fp1, true))));
 }
 
   RewriteResponse equal (TNode node, bool isPreRewrite) {

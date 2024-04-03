@@ -48,17 +48,9 @@ class FpExpandDefs
 
  private:
   /** TODO: document (projects issue #265) */
-  Node minUF(Node);
-  Node maxUF(Node);
-  Node toUBVUF(Node);
-  Node toSBVUF(Node);
   Node toRealUF(Node);
   Node abstractRealToFloat(Node);
   Node abstractFloatToReal(Node);
-  ComparisonUFMap d_minMap;
-  ComparisonUFMap d_maxMap;
-  ConversionUFMap d_toUBVMap;
-  ConversionUFMap d_toSBVMap;
   ComparisonUFMap d_toRealMap;
 }; /* class TheoryFp */
 

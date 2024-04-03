@@ -113,10 +113,10 @@ typerule FLOATINGPOINT_MIN   ::cvc5::internal::theory::fp::FloatingPointOperatio
 operator FLOATINGPOINT_MAX 2 "floating-point maximum"
 typerule FLOATINGPOINT_MAX   ::cvc5::internal::theory::fp::FloatingPointOperationTypeRule
 
-operator FLOATINGPOINT_MIN_TOTAL 3 "floating-point minimum (defined for all inputs)"
+operator FLOATINGPOINT_MIN_TOTAL 2 "floating-point minimum (defined for all inputs)"
 typerule FLOATINGPOINT_MIN_TOTAL   ::cvc5::internal::theory::fp::FloatingPointPartialOperationTypeRule
 
-operator FLOATINGPOINT_MAX_TOTAL 3 "floating-point maximum (defined for all inputs)"
+operator FLOATINGPOINT_MAX_TOTAL 2 "floating-point maximum (defined for all inputs)"
 typerule FLOATINGPOINT_MAX_TOTAL   ::cvc5::internal::theory::fp::FloatingPointPartialOperationTypeRule
 
 
