@@ -23,6 +23,7 @@
 
 #include "context/cdhashset.h"
 #include "context/cdo.h"
+#include "theory/care_pair_argument_callback.h"
 #include "theory/fp/theory_fp_rewriter.h"
 #include "theory/theory.h"
 #include "theory/theory_eq_notify.h"
@@ -86,6 +87,8 @@ class TheoryFp : public Theory
 
   EqualityStatus getEqualityStatus(TNode a, TNode b) override;
 
+  void computeCareGraph() override;
+
  private:
   using ConversionAbstractionMap = context::CDHashMap<TypeNode, Node>;
   using AbstractionMap = context::CDHashMap<Node, Node>;
@@ -144,6 +147,12 @@ class TheoryFp : public Theory
    * `d_invalidateModelCache` flag is set to true.
    */
   std::unordered_map<Node, Node> d_modelCache;
+
+  /** Cache of fp.min_total/fp.max_total times for care graph computation. */
+  context::CDList<TNode> d_minMax;
+
+  /** The care pair argument callback, used for theory combination */
+  CarePairArgumentCallback d_cpacb;
 
   /** True constant. */
   Node d_true;

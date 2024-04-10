@@ -22,9 +22,11 @@
 #include <vector>
 
 #include "base/configuration.h"
+#include "expr/node_trie.h"
 #include "expr/skolem_manager.h"
 #include "options/fp_options.h"
 #include "smt/logic_exception.h"
+#include "theory/bv/theory_bv_utils.h"
 #include "theory/fp/fp_word_blaster.h"
 #include "theory/fp/theory_fp_rewriter.h"
 #include "theory/output_channel.h"
@@ -72,6 +74,8 @@ TheoryFp::TheoryFp(Env& env, OutputChannel& out, Valuation valuation)
       d_notify(d_im),
       d_wbFactsCache(userContext()),
       d_invalidateModelCache(context(), true),
+      d_minMax(context()),
+      d_cpacb(*this),
       d_true(NodeManager::currentNM()->mkConst(true))
 {
   // indicate we are using the default theory state and inference manager
@@ -635,6 +639,11 @@ void TheoryFp::preRegisterTerm(TNode node)
   }
   Trace("fp-preRegisterTerm")
       << "TheoryFp::preRegisterTerm(): " << node << std::endl;
+  if (node.getKind() == Kind::FLOATINGPOINT_MIN_TOTAL
+      || node.getKind() == Kind::FLOATINGPOINT_MAX_TOTAL)
+  {
+    d_minMax.push_back(node);
+  }
   registerTerm(node);
   return;
 }
@@ -745,6 +754,11 @@ void TheoryFp::notifySharedTerm(TNode n)
     d_wbFactsCache.insert(n);
     wordBlastAndEquateTerm(n);
   }
+  if (n.getKind() == Kind::FLOATINGPOINT_MIN_TOTAL
+      || n.getKind() == Kind::FLOATINGPOINT_MAX_TOTAL)
+  {
+    d_minMax.push_back(n);
+  }
 }
 
 Node TheoryFp::getCandidateModelValue(TNode node)
@@ -787,7 +801,9 @@ Node TheoryFp::getCandidateModelValue(TNode node)
     Node value;
 
     Kind kind = cur.getKind();
-    if (kind == Kind::FLOATINGPOINT_TO_FP_FROM_SBV
+    if (kind == Kind::FLOATINGPOINT_MIN_TOTAL
+        || kind == Kind::FLOATINGPOINT_MAX_TOTAL
+        || kind == Kind::FLOATINGPOINT_TO_FP_FROM_SBV
         || kind == Kind::FLOATINGPOINT_TO_FP_FROM_UBV
         || kind == Kind::FLOATINGPOINT_TO_FP_FROM_REAL
         || kind == Kind::FLOATINGPOINT_TO_FP_FROM_IEEE_BV
@@ -887,6 +903,38 @@ EqualityStatus TheoryFp::getEqualityStatus(TNode a, TNode b)
     return EqualityStatus::EQUALITY_FALSE_IN_MODEL;
   }
   return EqualityStatus::EQUALITY_UNKNOWN;
+}
+
+void TheoryFp::computeCareGraph()
+{
+  Trace("theory-fp") << "TheoryFp::computeCareGraph()" << std::endl;
+
+  std::map<std::pair<Kind, TypeNode>, TNodeTrie> index;
+
+  for (size_t i = 0, n = d_minMax.size(); i < n; ++i)
+  {
+    std::vector<TNode> reps;
+    bool trigger = false;
+    TNode node = d_minMax[i];
+    for (const auto& child : node)
+    {
+      reps.push_back(d_equalityEngine->getRepresentative(child));
+      if (d_equalityEngine->isTriggerTerm(child, THEORY_FP))
+      {
+        trigger = true;
+      }
+    }
+    if (trigger)
+    {
+      std::cout << "add index: " << node << std::endl;
+      TypeNode type = node.getType();
+      index[std::make_pair(node.getKind(), type)].addTerm(node, reps);
+    }
+  }
+  for (const auto& idx : index)
+  {
+    nodeTriePathPairProcess(&idx.second, 3, d_cpacb);
+  }
 }
 
 bool TheoryFp::collectModelInfo(TheoryModel* m,

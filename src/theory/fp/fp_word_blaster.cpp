@@ -1288,15 +1288,17 @@ Node FpWordBlaster::wordBlast(TNode node)
   return node;
 }
 
-Node FpWordBlaster::getValue(Valuation& val, TNode var)
+Node FpWordBlaster::getValue(Valuation& val, TNode node)
 {
-  Assert(var.getKind() == Kind::FLOATINGPOINT_TO_FP_FROM_SBV
-         || var.getKind() == Kind::FLOATINGPOINT_TO_FP_FROM_UBV
-         || var.getKind() == Kind::FLOATINGPOINT_TO_FP_FROM_REAL
-         || var.getKind() == Kind::FLOATINGPOINT_TO_FP_FROM_IEEE_BV
-         || Theory::isLeafOf(var, THEORY_FP));
+  Assert(node.getKind() == Kind::FLOATINGPOINT_MIN_TOTAL
+         || node.getKind() == Kind::FLOATINGPOINT_MAX_TOTAL
+         || node.getKind() == Kind::FLOATINGPOINT_TO_FP_FROM_SBV
+         || node.getKind() == Kind::FLOATINGPOINT_TO_FP_FROM_UBV
+         || node.getKind() == Kind::FLOATINGPOINT_TO_FP_FROM_REAL
+         || node.getKind() == Kind::FLOATINGPOINT_TO_FP_FROM_IEEE_BV
+         || Theory::isLeafOf(node, THEORY_FP));
 
-  TypeNode t(var.getType());
+  TypeNode t(node.getType());
 
   Assert(t.isRoundingMode() || t.isFloatingPoint())
       << "Asking for the value of a type that is not managed by the "
@@ -1304,7 +1306,7 @@ Node FpWordBlaster::getValue(Valuation& val, TNode var)
 
   if (t.isRoundingMode())
   {
-    rmMap::const_iterator i(d_rmMap.find(var));
+    rmMap::const_iterator i(d_rmMap.find(node));
     if (i == d_rmMap.end())
     {
       return Node::null();
@@ -1312,7 +1314,7 @@ Node FpWordBlaster::getValue(Valuation& val, TNode var)
     return rmToNode((*i).second);
   }
 
-  fpMap::const_iterator i(d_fpMap.find(var));
+  fpMap::const_iterator i(d_fpMap.find(node));
   if (i == d_fpMap.end())
   {
     return Node::null();
