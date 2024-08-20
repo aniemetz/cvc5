@@ -57,8 +57,11 @@ if(NOT CaDiCaL_FOUND_SYSTEM)
   #set(CaDiCaL_CHECKSUM "64ac19fe09bae699f671e3ce8343576fa610d4b8")
   #set(CaDiCaL_VERSION "c675a01")
   #set(CaDiCaL_CHECKSUM "be33b3ae3459dd562b116c3a575a03e10b528e66")
-  set(CaDiCaL_VERSION "73873e3")
-  set(CaDiCaL_CHECKSUM "1f8150ef7a4c4fdd1a9d77c6fd498a4435b87ddd")
+  # ipasirup-refinements
+  #set(CaDiCaL_VERSION "73873e3")
+  #set(CaDiCaL_CHECKSUM "2016b20ba172099d34541f2eb83e3aae4b3cd474b3eab06cb5260d39af567dfe")
+  set(CaDiCaL_VERSION "2df7b7fed0f9c522fd4cdf6e88cecad4cac8a2df")
+  set(CaDiCaL_CHECKSUM "d903b8062ad3ea88275fa76269d5753e26da9452")
 
   # avoid configure script and instantiate the makefile manually the configure
   # scripts unnecessarily fails for cross compilation thus we do the bare
