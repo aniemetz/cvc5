@@ -515,11 +515,11 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
   bool cb_has_external_clause(bool& is_forgettable) override
   {
     is_forgettable = false;
-    if (!d_new_clauses_removable.empty())
-    {
-      Assert(!d_new_clauses.empty());
-      is_forgettable = d_new_clauses_removable.front();
-    }
+    //if (!d_new_clauses_removable.empty())
+    //{
+    //  Assert(!d_new_clauses.empty());
+    //  is_forgettable = d_new_clauses_removable.front();
+    //}
     return !d_new_clauses.empty();
   }
 
@@ -533,12 +533,12 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
   {
     Assert(!d_new_clauses.empty());
     CadicalLit lit = d_new_clauses.front();
-    if (lit == 0 && !d_new_clauses_removable.empty())
-    {
-      // d_new_clauses_removable will be empty when d_new_clauses is not
-      // empty if we are in search
-      d_new_clauses_removable.pop_front();
-    }
+    //if (lit == 0 && !d_new_clauses_removable.empty())
+    //{
+    //  // d_new_clauses_removable will be empty when d_new_clauses is not
+    //  // empty if we are in search
+    //  d_new_clauses_removable.pop_front();
+    //}
     d_new_clauses.pop_front();
     Trace("cadical::propagator")
         << "external_clause: " << toSatLiteral(lit) << std::endl;
@@ -621,7 +621,7 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
       {
         d_new_clauses.insert(d_new_clauses.end(), lits.begin(), lits.end());
         d_new_clauses.push_back(0);
-        d_new_clauses_removable.push_back(removable);
+        //d_new_clauses_removable.push_back(removable);
       }
       else
       {
@@ -980,7 +980,7 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
    * cb_add_reason_clause_lit().
    */
   std::deque<CadicalLit> d_new_clauses;
-  std::deque<bool> d_new_clauses_removable;
+  //std::deque<bool> d_new_clauses_removable;
 
   /**
    * Flag indicating whether cb_add_reason_clause_lit() is currently
