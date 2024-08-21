@@ -1022,7 +1022,6 @@ void CadicalSolver::init()
     d_solver->set("lucky", 0);
     d_solver->set("ilb", 0);
     d_solver->set("ilbassumptions", 0);
-    d_solver->configure("sat");
     //d_solver->set("log", 1);
   }
 
