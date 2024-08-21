@@ -1073,8 +1073,6 @@ void CadicalSolver::init()
     d_solver->set("ilbassumptions", 0);
     d_solver->connect_observer(d_propagator.get());
     d_solver->connect_external_propagator(d_propagator.get());
-    d_solver->configure("sat");
-    //d_solver->set("log", 1);
   }
 
   d_true = newVar();
