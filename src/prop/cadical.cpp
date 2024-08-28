@@ -23,6 +23,7 @@
 #include "options/base_options.h"
 #include "options/main_options.h"
 #include "options/proof_options.h"
+#include "prop/sat_solver_types.h"
 #include "prop/theory_proxy.h"
 #include "util/resource_manager.h"
 #include "util/statistics_registry.h"
@@ -80,6 +81,7 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
       : d_proxy(proxy), d_context(*context), d_solver(solver), d_stats(stats)
   {
     d_var_info.emplace_back();  // 0: Not used
+    d_activation_literals.push_back(undefSatLiteral); // 0: Not used
     are_reasons_forgettable = false;
   }
 
@@ -605,6 +607,13 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
   void add_clause(const SatClause& clause, bool removable)
   {
     std::vector<CadicalLit> lits;
+    // Note: Removable clauses can be added to lower user levels to avoid
+    //       deleting them too eagerly. For example, conflicts may be learned
+    //       at a user level N even though it only has literals of at most user
+    //       level N - 2. In this case we can add the clause at N - 2 instead
+    //       of deleting the clause when popping user level N, which would
+    //       require us to relearn the clause again.
+    uint32_t max_user_level = removable ? 0 : current_user_level();
     for (const SatLiteral& lit : clause)
     {
       SatVariable var = lit.getSatVariable();
@@ -621,26 +630,51 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
           return;
         }
       }
+      max_user_level = std::max(max_user_level, info.level_intro);
       lits.push_back(toCadicalLit(lit));
     }
     if (!lits.empty())
     {
-      // Add activation literal to clause if we are in user level > 0
-      SatLiteral alit = current_activation_lit();
-      if (alit != undefSatLiteral)
+      if (TraceIsOn("cadical::propagator"))
       {
-        lits.insert(lits.begin(), toCadicalLit(alit));
+        Trace("cadical::propagator") << "addClause (removable: " << removable
+                                     << ", max_level: " << max_user_level
+                                     << ", cur_level: " << current_user_level()
+                                     << ", insearch: " << d_in_search << "):";
+        SatLiteral alit = d_in_search ? activation_lit(max_user_level)
+                                      : current_activation_lit();
+        if (alit != undefSatLiteral)
+        {
+          Trace("cadical::propagator") << " " << alit;
+        }
+        for (const SatLiteral& lit : clause)
+        {
+          Trace("cadical::propagator") << " " << lit;
+        }
+        Trace("cadical::propagator") << " 0" << std::endl;
       }
       // Do not immediately add clauses added during search. We have to buffer
       // them and add them during the cb_add_reason_clause_lit callback.
       if (d_in_search)
       {
+        // Determine activation literal based on max user level of clause.
+        SatLiteral alit = activation_lit(max_user_level);
+        if (alit != undefSatLiteral)
+        {
+          d_new_clauses.push_back(toCadicalLit(alit));
+        }
         d_new_clauses.insert(d_new_clauses.end(), lits.begin(), lits.end());
         d_new_clauses.push_back(0);
         //d_new_clauses_removable.push_back(removable);
       }
       else
       {
+        // Add activation literal to clause if we are in user level > 0
+        SatLiteral alit = current_activation_lit();
+        if (alit != undefSatLiteral)
+        {
+          d_solver.add(toCadicalLit(alit));
+        }
         for (const auto& lit : lits)
         {
           d_solver.add(lit);
@@ -849,11 +883,14 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
    */
   const SatLiteral& current_activation_lit()
   {
-    if (d_activation_literals.empty())
-    {
-      return undefSatLiteral;
-    }
+    Assert(!d_activation_literals.empty());
     return d_activation_literals.back();
+  }
+
+  const SatLiteral& activation_lit(size_t user_level)
+  {
+    Assert(user_level < d_activation_literals.size());
+    return d_activation_literals[user_level];
   }
 
   /** Return the current user (assertion) level. */
@@ -879,8 +916,6 @@ class CadicalPropagator : public CaDiCaL::ExternalPropagator,
     {
       Trace("cadical::propagator")
           << "re-enqueue (user pop): " << lit << std::endl;
-      // Make sure to pre-register the re-enqueued theory literal
-      d_proxy->notifySatLiteral(d_proxy->getNode(lit));
       // Re-enqueue fixed theory literal
       d_proxy->enqueueTheoryLiteral(lit);
       // We are notifying fixed literals at the current user level, update the
@@ -1194,8 +1229,10 @@ SatValue CadicalSolver::_solve(const std::vector<SatLiteral>& assumptions)
   if (d_propagator)
   {
     // Assume activation literals for all active user levels.
-    for (const auto& lit : d_propagator->activation_literals())
+    const auto& activation_literals = d_propagator->activation_literals();
+    for (size_t i = 1, size = activation_literals.size(); i < size; ++i)
     {
+      const auto& lit = activation_literals[i];
       Trace("cadical::propagator")
           << "assume activation lit: " << ~lit << std::endl;
       d_solver->assume(toCadicalLit(~lit));
@@ -1231,20 +1268,6 @@ SatValue CadicalSolver::_solve(const std::vector<SatLiteral>& assumptions)
 
 ClauseId CadicalSolver::addClause(SatClause& clause, bool removable)
 {
-  if (d_propagator && TraceIsOn("cadical::propagator"))
-  {
-    Trace("cadical::propagator") << "addClause (" << removable << "):";
-    SatLiteral alit = d_propagator->current_activation_lit();
-    if (alit != undefSatLiteral)
-    {
-      Trace("cadical::propagator") << " " << alit;
-    }
-    for (const SatLiteral& lit : clause)
-    {
-      Trace("cadical::propagator") << " " << lit;
-    }
-    Trace("cadical::propagator") << " 0" << std::endl;
-  }
   // If we are currently in search, add clauses through the propagator.
   if (d_propagator)
   {
@@ -1350,7 +1373,8 @@ void CadicalSolver::initialize(context::Context* context,
 {
   d_context = context;
   d_proxy = theoryProxy;
-  d_propagator.reset(new CadicalPropagator(theoryProxy, context, *d_solver));
+  d_propagator.reset(new CadicalPropagator(
+      theoryProxy, context, *d_solver, statisticsRegistry()));
   if (!d_env.getPlugins().empty())
   {
     d_clause_learner.reset(new ClauseLearner(*theoryProxy, 0));
