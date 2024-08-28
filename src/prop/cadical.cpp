@@ -1016,8 +1016,7 @@ CadicalSolver::CadicalSolver(Env& env,
 
 void CadicalSolver::init()
 {
-  d_true = newVar();
-  d_false = newVar();
+  d_solver->set("quiet", 1);  // CaDiCaL is verbose by default
 
   // walk and lucky phase do not use the external propagator, disable for now
   if (d_propagator)
@@ -1026,10 +1025,13 @@ void CadicalSolver::init()
     d_solver->set("lucky", 0);
     d_solver->set("ilb", 0);
     d_solver->set("ilbassumptions", 0);
+    d_solver->connect_observer(d_propagator.get());
+    d_solver->connect_external_propagator(d_propagator.get());
     //d_solver->set("log", 1);
   }
 
-  d_solver->set("quiet", 1);  // CaDiCaL is verbose by default
+  d_true = newVar();
+  d_false = newVar();
   d_solver->add(toCadicalVar(d_true));
   d_solver->add(0);
   d_solver->add(-toCadicalVar(d_false));
@@ -1229,10 +1231,9 @@ void CadicalSolver::initialize(context::Context* context,
 {
   d_context = context;
   d_proxy = theoryProxy;
-  d_propagator.reset(new CadicalPropagator(theoryProxy, context, *d_solver));
+  d_propagator.reset(new CadicalPropagator(
+      theoryProxy, context, *d_solver, statisticsRegistry()));
   init();
-  d_solver->connect_observer(d_propagator.get());
-  d_solver->connect_external_propagator(d_propagator.get());
 }
 
 void CadicalSolver::push()
