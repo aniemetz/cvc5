@@ -55,7 +55,9 @@ TheoryProxy::TheoryProxy(Env& env,
       d_zll(nullptr),
       d_prr(nullptr),
       d_stopSearch(userContext(), false),
-      d_activatedSkDefs(false)
+      d_activatedSkDefs(false),
+      d_stats(env.getStatisticsRegistry())
+
 {
   bool trackZeroLevel =
       options().smt.deepRestartMode != options::DeepRestartMode::NONE
@@ -172,6 +174,7 @@ void TheoryProxy::notifyAssertion(Node a, TNode skolem, bool isLemma)
 
 void TheoryProxy::theoryCheck(theory::Theory::Effort effort) {
   Trace("theory-proxy") << "TheoryProxy: check " << effort << std::endl;
+  d_stats.theoryCheck << effort;
   d_activatedSkDefs = false;
   // check with the preregistrar
   d_prr->check();
@@ -237,6 +240,7 @@ void TheoryProxy::theoryCheck(theory::Theory::Effort effort) {
 }
 
 void TheoryProxy::theoryPropagate(std::vector<SatLiteral>& output) {
+  ++d_stats.theoryPropagate;
   // Get the propagated literals
   std::vector<TNode> outputNodes;
   d_theoryEngine->getPropagatedLiterals(outputNodes);
@@ -247,6 +251,7 @@ void TheoryProxy::theoryPropagate(std::vector<SatLiteral>& output) {
 }
 
 void TheoryProxy::explainPropagation(SatLiteral l, SatClause& explanation) {
+  ++d_stats.explainPropagation;
   TNode lNode = d_cnfStream->getNode(l);
   Trace("prop-explain") << "explainPropagation(" << lNode << ")" << std::endl;
 
@@ -289,6 +294,7 @@ void TheoryProxy::explainPropagation(SatLiteral l, SatClause& explanation) {
 }
 
 void TheoryProxy::enqueueTheoryLiteral(const SatLiteral& l) {
+  ++d_stats.enqueueTheoryLiteral;
   Node literalNode = d_cnfStream->getNode(l);
   Trace("prop") << "enqueueing theory literal " << l << " " << literalNode << std::endl;
   Assert(!literalNode.isNull());
@@ -299,6 +305,7 @@ void TheoryProxy::enqueueTheoryLiteral(const SatLiteral& l) {
 SatLiteral TheoryProxy::getNextDecisionRequest(bool& requirePhase,
                                                bool& stopSearch)
 {
+  ++d_stats.nextDecisionRequest;
   Trace("theory-proxy") << "TheoryProxy: getNextDecisionRequest" << std::endl;
   requirePhase = false;
   stopSearch = false;
@@ -435,12 +442,14 @@ void TheoryProxy::getSkolems(TNode node,
 
 void TheoryProxy::notifySatLiteral(Node n)
 {
+  ++d_stats.notifySatLiteral;
   // notify the preregister utility, which may trigger new preregistrations
   d_prr->notifySatLiteral(n);
 }
 
 void TheoryProxy::notifyBacktrack()
 {
+  ++d_stats.notifyBacktrack;
   // notify the preregistrar, which may trigger reregistrations
   d_prr->notifyBacktrack();
 }
@@ -471,6 +480,21 @@ std::vector<Node> TheoryProxy::getLearnedZeroLevelLiteralsForRestart() const
     return d_zll->getLearnedZeroLevelLiteralsForRestart();
   }
   return {};
+}
+
+TheoryProxy::Statistics::Statistics(StatisticsRegistry& stats)
+    : theoryCheck(stats.registerHistogram<theory::Theory::Effort>(
+          "theory::proxy::checks")),
+      notifyBacktrack(stats.registerInt("theory::proxy::notify_backtracks")),
+      notifySatLiteral(stats.registerInt("theory::proxy::notify_satliteral")),
+      theoryPropagate(stats.registerInt("theory::proxy::theory_propagate")),
+      explainPropagation(
+          stats.registerInt("theory::proxy::explain_propagation")),
+      enqueueTheoryLiteral(
+          stats.registerInt("theory::proxy::enqueue_theory_literal")),
+      nextDecisionRequest(
+          stats.registerInt("theory::proxy::next_decision_request"))
+{
 }
 
 }  // namespace prop
