@@ -147,6 +147,7 @@ class CadicalSolver : public CDCLTSatSolver, protected EnvObj
     IntStat d_numSatCalls;
     IntStat d_numVariables;
     IntStat d_numClauses;
+    IntStat d_numActivationVars;
     TimerStat d_solveTime;
     Statistics(StatisticsRegistry& registry, const std::string& prefix);
   };
