@@ -35,6 +35,7 @@
 #include "theory/theory.h"
 #include "theory/theory_preprocessor.h"
 #include "util/resource_manager.h"
+#include "util/statistics_registry.h"
 
 namespace cvc5::internal {
 
@@ -266,6 +267,18 @@ class TheoryProxy : protected EnvObj, public Registrar
    * are dynamically activated only when decision=justification.
    */
   bool d_activatedSkDefs;
+
+  struct Statistics
+  {
+    Statistics(StatisticsRegistry& stats);
+    HistogramStat<theory::Theory::Effort> theoryCheck;
+    IntStat notifyBacktrack;
+    IntStat notifySatLiteral;
+    IntStat theoryPropagate;
+    IntStat explainPropagation;
+    IntStat enqueueTheoryLiteral;
+    IntStat nextDecisionRequest;
+  } d_stats;
 }; /* class TheoryProxy */
 
 }  // namespace prop
