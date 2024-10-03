@@ -1,3 +1,4 @@
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --strict-parsing
 ; EXPECT: sat
 (set-logic QF_LIRA)

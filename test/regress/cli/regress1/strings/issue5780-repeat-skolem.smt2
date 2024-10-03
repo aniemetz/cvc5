@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (set-option :strings-lazy-pp false)
 (set-info :status sat)
 (declare-fun s () String)

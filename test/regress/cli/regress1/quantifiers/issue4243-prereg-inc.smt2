@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic BV)
+(set-option :incremental true)
 (set-info :status sat)
 (declare-fun _substvar_16_ () Bool)
 (set-option :check-models true)

@@ -1,6 +1,7 @@
+; COMMAND-LINE: -i
 ; EXPECT: unsat
-(set-option :incremental true)
 (set-logic ALL)
+(set-option :incremental true)
 
 (declare-fun x () (Relation Int Int))
 (declare-fun y () (Relation Int Int))

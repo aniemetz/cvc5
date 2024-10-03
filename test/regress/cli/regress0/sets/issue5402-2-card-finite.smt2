@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (set-option :sets-exp true)
 (declare-datatype Color ((Blue) (Purple)))
 (declare-fun A () (Set Color))

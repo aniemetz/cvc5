@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic QF_UFSLIA)
+(set-option :incremental true)
 (set-option :strings-lazy-pp false)
 (declare-fun str0 () String)
 (declare-fun str4 () String)

@@ -1,3 +1,6 @@
+; Fails on parsing back in after dumping post-asserts due to HO, hence we have
+; to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; EXPECT: unsat
 (set-logic ALL)
 (define-fun b ((bv (_ BitVec 4))) (_ BitVec 4) bv)

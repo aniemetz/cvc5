@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; SCRUBBER: grep -o "Mismatched parentheses in SMT-LIBv2 term"
 ; EXPECT: Mismatched parentheses in SMT-LIBv2 term

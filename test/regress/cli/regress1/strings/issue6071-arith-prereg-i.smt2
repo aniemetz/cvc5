@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (set-option :strings-lazy-pp false)
 (declare-fun ufbi4 (Bool Bool Bool Bool) Int)
 (declare-fun str0 () String)

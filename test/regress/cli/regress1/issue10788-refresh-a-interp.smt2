@@ -1,8 +1,7 @@
-; COMMAND-LINE: --produce-interpolants -q
+; COMMAND-LINE: --produce-interpolants -q -i
 ; SCRUBBER: grep -v -E '(\(define-fun)'
 ; EXIT: 0
 (set-option :produce-interpolants true)
-(set-option :incremental true)
 (set-logic QF_LIA)
 (declare-fun i3 () Int)
 (declare-fun i4 () Int)

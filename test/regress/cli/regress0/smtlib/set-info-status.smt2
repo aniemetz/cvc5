@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ; EXPECT: (error "cannot get unsat core unless in unsat mode.")
 ; EXPECT: sat
 ; EXPECT: sat

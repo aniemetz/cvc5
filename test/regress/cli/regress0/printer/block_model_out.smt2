@@ -3,9 +3,7 @@
 ; EXPECT: block-model
 ; EXPECT: block-model
 ; EXIT: 0
-; DISABLE-TESTER: dump
 (set-logic ALL)
-(set-option :incremental true)
 (set-option :produce-models true)
 (declare-fun x () Int)
 (declare-fun y () Int)

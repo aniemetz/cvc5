@@ -1,5 +1,6 @@
 ; COMMAND-LINE: -i --sat-solver=cadical
 (set-logic QF_LIA)
+(set-option :incremental true)
 (declare-fun s () Int)
 (push)
 (pop)

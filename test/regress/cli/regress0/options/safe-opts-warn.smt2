@@ -5,5 +5,6 @@
 ; EXPECT-ERROR: Please use --help to get help on command-line options.
 ; EXIT: 1
 ; DISABLE-TESTER: dump
+; DISABLE-TESTER: dump-post
 (set-logic ALL)
 (check-sat)

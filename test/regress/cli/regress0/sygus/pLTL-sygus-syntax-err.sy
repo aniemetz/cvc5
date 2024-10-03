@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; COMMAND-LINE: --sygus-out=status --sygus-rec-fun --lang=sygus2
 ; ERROR-SCRUBBER: grep -o "number of arguments does not match the constructor type"

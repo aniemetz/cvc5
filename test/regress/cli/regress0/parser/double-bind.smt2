@@ -1,6 +1,6 @@
-; EXPECT: (error "Cannot bind x to symbol of type Bool, maybe the symbol has already been defined?")
+; SCRUBBER: grep -o "Cannot bind x to symbol of type Bool"
+; EXPECT: Cannot bind x to symbol of type Bool
 ; EXIT: 1
-; DISABLE-TESTER: dump
 (set-logic ALL)
 (declare-const x Bool)
 (declare-const x Bool)

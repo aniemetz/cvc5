@@ -1,3 +1,4 @@
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --timeout-core-timeout=200 --print-cores-full
 ; REQUIRES: no-competition
 ; EXPECT: sat

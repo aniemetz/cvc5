@@ -1,6 +1,9 @@
+; Fails on parsing back in after dumping post-asserts due to printing
+; FLOATINGPOINT_MIN_TOTAL, which we don't export to the API. Hence we have
+; to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --incremental
 (set-logic ALL)
-(set-option :incremental true)
 (define-sort S16 () Float64)
 (define-sort S37 () (Array S16 Int))
 (declare-const c S37)

@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic QF_ALIA)
+(set-option :incremental true)
 (declare-fun v0 () Bool)
 (declare-fun i1 () Int)
 (declare-fun arr0 () (Array Int Bool))

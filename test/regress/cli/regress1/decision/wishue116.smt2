@@ -1,9 +1,8 @@
-; COMMAND-LINE: --decision=justification
+; COMMAND-LINE: --decision=justification -i
 ; EXPECT: sat
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic SAT)
-(set-option :incremental true)
 (declare-fun v1 () Bool)
 (declare-fun v2 () Bool)
 (declare-fun v3 () Bool)

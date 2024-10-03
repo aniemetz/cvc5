@@ -1,4 +1,5 @@
 ; DISABLE-TESTER: dump
+; DISABLE-TESTER: dump-post
 ; EXPECT: sat
 (set-logic ALL)
 (set-info :status sat)

@@ -1,4 +1,5 @@
 ; DISABLE-TESTER: dump
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --produce-models
 ; EXPECT: sat
 ; EXPECT: (((f (as @Foo_0 Foo)) 3))

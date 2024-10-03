@@ -1,4 +1,3 @@
-; EXPECT:
 ; SCRUBBER: grep -v "Ackermannization is not supported for kind"
 ; EXIT: 1
 (set-logic QF_AX)

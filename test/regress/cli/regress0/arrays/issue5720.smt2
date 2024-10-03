@@ -3,6 +3,7 @@
 ; EXPECT: sat
 ; DISABLE-TESTER: model
 (set-logic QF_ALIA)
+(set-option :incremental true)
 (set-option :check-unsat-cores true)
 (set-option :fmf-fun true)
 (declare-fun arr0 () (Array Bool Int))

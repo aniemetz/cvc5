@@ -3,6 +3,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-sort U 0)
 (declare-fun c (U U) U)
 (declare-fun k () U)

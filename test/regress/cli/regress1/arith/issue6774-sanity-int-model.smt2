@@ -4,6 +4,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic ALIRA)
+(set-option :incremental true)
 (declare-const x Real)
 (declare-fun i () Int)
 (declare-fun i1 () Int)

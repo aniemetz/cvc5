@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; EXPECT: expecting a string-like
 ; SCRUBBER: grep -o "expecting a string-like"
 ; EXIT: 1

@@ -2,6 +2,7 @@
 ; SCRUBBER: grep -v -E '(\(define-fun)'
 ; EXIT: 0
 
+(set-option :incremental true)
 (set-option :produce-models true)
 (set-option :global-declarations true)
 (set-option :produce-unsat-cores true)

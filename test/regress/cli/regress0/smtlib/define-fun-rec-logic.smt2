@@ -1,4 +1,5 @@
 ; DISABLE-TESTER: dump
+; DISABLE-TESTER: dump-post
 ; EXPECT: unsat
 ; EXPECT: (error "recursive function definitions require a logic with quantifiers")
 ; EXIT: 1

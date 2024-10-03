@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-fun t () (Set Int))
 (declare-fun s () (Set Int))
 (declare-const v Bool)

@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; SCRUBBER: grep -o "expecting number of repeats > 0"
 ; EXPECT: expecting number of repeats > 0

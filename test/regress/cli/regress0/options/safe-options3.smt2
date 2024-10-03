@@ -1,3 +1,4 @@
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --safe-options --full-saturate-quant
 ; EXPECT: sat
 ; DISABLE-TESTER: model

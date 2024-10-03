@@ -5,6 +5,7 @@
 ; EXPECT: unsat
 ; EXPECT: unsat
 (set-logic NIA)
+(set-option :incremental true)
 (declare-fun T () Int)
 (declare-fun F () Int)
 (assert (distinct T F))

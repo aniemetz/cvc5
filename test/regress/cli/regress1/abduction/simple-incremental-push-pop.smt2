@@ -1,9 +1,8 @@
-; COMMAND-LINE: --produce-abducts
+; COMMAND-LINE: --produce-abducts -i
 ; SCRUBBER: grep -v -E '(\(define-fun)'
 ; EXIT: 0
 (set-logic QF_LIA)
 (set-option :produce-abducts true)
-(set-option :incremental true)
 (declare-fun x () Int)
 (declare-fun y () Int)
 (push)

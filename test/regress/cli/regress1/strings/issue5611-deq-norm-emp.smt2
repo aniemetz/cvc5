@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i --strings-exp -q
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-fun str7 () String)
 (declare-fun str8 () String)
 (declare-fun str9 () String)

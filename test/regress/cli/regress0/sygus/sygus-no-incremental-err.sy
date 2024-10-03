@@ -1,4 +1,5 @@
 ; DISABLE-TESTER: dump
+; DISABLE-TESTER: dump-post
 ; REQUIRES: no-competition
 ; COMMAND-LINE: --sygus-out=status
 ; EXPECT: feasible

@@ -1,3 +1,6 @@
+; Fails on parsing back in after dumping post-asserts du to the logic string
+; not containing Int (it's output as QF_UFNRA).
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --solve-real-as-int --no-new-prop --nl-ext-tplanes
 ; EXPECT: sat
 (set-info :smt-lib-version 2.6)

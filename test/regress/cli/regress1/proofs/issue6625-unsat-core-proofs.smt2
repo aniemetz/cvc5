@@ -2,6 +2,7 @@
 ; EXPECT: unsat
 ; EXPECT: unsat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-const a String)
 (declare-const b String)
 (declare-const c String)

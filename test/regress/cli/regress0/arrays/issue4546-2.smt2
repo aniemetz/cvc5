@@ -4,6 +4,7 @@
 ; EXPECT: sat
 ; EXPECT: unsat
 (set-logic QF_AUFBV)
+(set-option :incremental true)
 (declare-const bv_58-0 (_ BitVec 4))
 (check-sat)
 (declare-const arr1 (Array (_ BitVec 4) Bool))

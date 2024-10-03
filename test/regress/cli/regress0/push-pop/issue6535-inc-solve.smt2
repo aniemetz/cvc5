@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-fun f0_2 (Real Real) Real)
 (declare-fun x8 () Real)
 (assert (= 0.0 (f0_2 x8 1.0)))

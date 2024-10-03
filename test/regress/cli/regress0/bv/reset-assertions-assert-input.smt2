@@ -1,5 +1,6 @@
 ; COMMAND-LINE: -i --bv-solver=bitblast --bv-assert-input
 (set-logic QF_BV)
+(set-option :incremental true)
 (set-option :global-declarations true)
 
 (declare-const a (_ BitVec 8))

@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ;(set-option :produce-unsat-cores true)
 (set-option :incremental true)
 (set-option :print-success false)

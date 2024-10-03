@@ -92,6 +92,7 @@ void Smt2State::addBitvectorOperators()
   addOperator(Kind::BITVECTOR_SHL, "bvshl");
   addOperator(Kind::BITVECTOR_LSHR, "bvlshr");
   addOperator(Kind::BITVECTOR_ULT, "bvult");
+  addOperator(Kind::BITVECTOR_ULTBV, "bvultbv");
   addOperator(Kind::BITVECTOR_NAND, "bvnand");
   addOperator(Kind::BITVECTOR_NOR, "bvnor");
   addOperator(Kind::BITVECTOR_XOR, "bvxor");
@@ -106,6 +107,7 @@ void Smt2State::addBitvectorOperators()
   addOperator(Kind::BITVECTOR_UGT, "bvugt");
   addOperator(Kind::BITVECTOR_UGE, "bvuge");
   addOperator(Kind::BITVECTOR_SLT, "bvslt");
+  addOperator(Kind::BITVECTOR_SLTBV, "bvsltbv");
   addOperator(Kind::BITVECTOR_SLE, "bvsle");
   addOperator(Kind::BITVECTOR_SGT, "bvsgt");
   addOperator(Kind::BITVECTOR_SGE, "bvsge");

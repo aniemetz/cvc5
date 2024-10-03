@@ -302,7 +302,9 @@ class AletheTester(Tester):
 
             if exit_code != EXIT_OK:
                 return exit_code
-            original_file = benchmark_info.benchmark_dir + '/' + benchmark_info.benchmark_basename
+            original_file = benchmark_info.benchmark_dir \
+                            + '/' \
+                            + benchmark_info.benchmark_basename
             carcara_args = [
                 "--allow-int-real-subtyping",
                 "--expand-let-bindings",
@@ -454,29 +456,39 @@ class AbductTester(Tester):
         )
 
 
-class DumpTester(Tester):
+class DumpBaseTester(Tester):
 
-    def __init__(self):
-        super().__init__("dump")
+    def __init__(self, name, re_start_end = None):
+        """
+            :param name: The name of the tester.
+            :param re_start_end: The expressions that mark the start and end
+                 segments of the output that should be parsed back in.
+        """
+        super().__init__(name)
+        self.ext_to_lang = {
+            ".smt2": "smt2",
+            ".sy": "sygus",
+        }
+        self.dump_args = []
+        self.command_line_args = [ "--parse-only" ]
+        self.re_start_end = re_start_end
+        self.pp_only_re_start = None if not re_start_end else \
+                            re.compile('^.*?' + re_start_end[0], re.DOTALL)
+        self.pp_only_re_end = None if not re_start_end else \
+                            re.compile(re_start_end[1] + '.*\n$', re.DOTALL)
 
     def applies(self, benchmark_info):
         return True
 
     def run_internal(self, benchmark_info):
-        ext_to_lang = {
-            ".smt2": "smt2",
-            ".sy": "sygus",
-        }
-
         tmpf_name = None
+        pp_only = '--preprocess-only' in self.dump_args
         with tempfile.NamedTemporaryFile(delete=False) as tmpf:
-            dump_args = [
-                "--parse-only",
-                "-o",
-                "raw-benchmark",
-                "--output-lang={}".format(ext_to_lang[benchmark_info.benchmark_ext]),
-            ]
-            dump_output, _, _ = run_process(
+            dump_args = list(self.dump_args)
+            dump_args.append(
+                "--output-lang={}".format(
+                    self.ext_to_lang[benchmark_info.benchmark_ext]))
+            dump_output, dump_error, _ = run_process(
                 [benchmark_info.cvc5_binary]
                 + benchmark_info.command_line_args
                 + dump_args
@@ -484,6 +496,38 @@ class DumpTester(Tester):
                 benchmark_info.benchmark_dir,
                 benchmark_info.timeout,
             )
+            # Partition into benchmark chunks as defined by start and end
+            # pattern given self.re_start_end and concatenate via intermediate
+            # (reset) commands. For example,
+            #    <some output>
+            #    ;; post-asserts start
+            #    <benchmark>
+            #    ;; post-asserts end
+            #    <some output>
+            #    ;; post-asserts start
+            #    <benchmark>
+            #    ;; post-asserts end
+            #    <some output>
+            # is sanitized into
+            #    ;; post-asserts start
+            #    <benchmark>
+            #    ;; post-asserts end
+            #    (reset)
+            #    ;; post-asserts start
+            #    <benchmark>
+            #    ;; post-asserts end
+            #    (reset)
+            if pp_only and self.pp_only_re_end:
+                for s in dump_output.decode().split(self.re_start_end[1]):
+                    print('"' + re.sub(
+                        self.pp_only_re_start,self.re_start_end[0],s) + '"')
+                dump_output = (
+                    self.re_start_end[1] + "(reset)\n").join(
+                    "" if self.re_start_end[0] not in s \
+                    else re.sub(
+                        self.pp_only_re_start,self.re_start_end[0],s) \
+                    for s in dump_output.decode().split(self.re_start_end[1])
+                ).encode()
 
             tmpf_name = tmpf.name
             tmpf.write(dump_output)
@@ -493,10 +537,10 @@ class DumpTester(Tester):
 
         exit_code = super().run_internal(
             benchmark_info._replace(
-                command_line_args=benchmark_info.command_line_args
-                + [
-                    "--parse-only",
-                    "--lang={}".format(ext_to_lang[benchmark_info.benchmark_ext]),
+                command_line_args = benchmark_info.command_line_args
+                + self.command_line_args + [
+                    "--lang={}".format(
+                            self.ext_to_lang[benchmark_info.benchmark_ext]),
                 ],
                 benchmark_basename=tmpf.name,
                 expected_exit_status=0,
@@ -505,6 +549,26 @@ class DumpTester(Tester):
         )
         os.remove(tmpf.name)
         return exit_code
+
+
+class DumpTester(DumpBaseTester):
+
+    def __init__(self):
+        super().__init__("dump")
+        self.dump_args.append("--parse-only")
+        self.dump_args.append("-o")
+        self.dump_args.append("raw-benchmark")
+
+
+class DumpPostTester(DumpBaseTester):
+
+    def __init__(self):
+        super().__init__(
+            "dump-post", [";; post-asserts start\n", ";; post-asserts end\n"])
+        self.dump_args.append("--preprocess-only")
+        self.dump_args.append("-o")
+        self.dump_args.append("post-asserts")
+        self.command_line_args.append("--parsing-mode=lenient")
 
 
 g_testers = {
@@ -516,6 +580,7 @@ g_testers = {
     "synth": SynthTester(),
     "abduct": AbductTester(),
     "dump": DumpTester(),
+    "dump-post": DumpPostTester(),
     "dsl-proof": DslProofTester(),
     "alethe": AletheTester(),
     "cpc": CpcTester()
@@ -529,6 +594,7 @@ g_default_testers = [
     "synth",
     "abduct",
     "dump",
+    "dump-post",
 ]
 
 ################################################################################
@@ -832,6 +898,16 @@ def run_regression(
                     testers.remove("alethe")
                 if "cpc" in testers:
                     testers.remove("cpc")
+
+    # SyGuS benchmarks print `->` operator post-asserts after preprocessing
+    # but do not set HO_ logic. Hence,e tester dump-post fails on these
+    # benchmarks when parsing back the dumped benchmark.
+    if benchmark_ext == ".sy" and 'dump-post' in testers:
+        testers.remove('dump-post')
+    # Dumping does not play well with scrubber tests.
+    if (scrubber or error_scrubber):
+        if 'dump' in testers: testers.remove('dump')
+        if 'dump-post' in testers: testers.remove('dump-post')
 
     expected_output = expected_output.strip()
     expected_error = expected_error.strip()

@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-fun a (Int) Int)
 (declare-fun b (Int) Int)
 (assert (= 1 (a (- 1))))

@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic QF_SLIA)
+(set-option :incremental true)
 (declare-fun _substvar_21_ () String)
 (declare-fun _substvar_29_ () String)
 (set-option :strings-lazy-pp false)

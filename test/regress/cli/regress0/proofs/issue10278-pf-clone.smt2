@@ -1,5 +1,4 @@
 ; COMMAND-LINE: --produce-proofs
-; DISABLE-TESTER: dump
 ; DISABLE-TESTER: unsat-core
 ; DISABLE-TESTER: cpc
 ; DISABLE-TESTER: lfsc

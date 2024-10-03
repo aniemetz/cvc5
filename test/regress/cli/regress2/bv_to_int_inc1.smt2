@@ -7,7 +7,6 @@
 ; EXPECT unsat
 ; EXPECT sat
 (set-logic QF_BV)
-(set-option :incremental true)
 (declare-fun a () (_ BitVec 3))
 (declare-fun b () (_ BitVec 3))
 (declare-fun c () (_ BitVec 3))

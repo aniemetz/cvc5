@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 (set-logic ALL)
 (set-option :incremental true)
 (set-option :produce-models true)

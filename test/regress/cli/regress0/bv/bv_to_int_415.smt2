@@ -1,4 +1,3 @@
-; EXPECT: 
 ; SCRUBBER: grep -v "higher.order"
 ; EXIT: 1
 (set-option :solve-bv-as-int sum)

@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; SCRUBBER: grep -o 'cannot construct Real or Int from string argument'
 ; EXPECT: cannot construct Real or Int from string argument
 ; EXIT: 1

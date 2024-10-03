@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ; SCRUBBER: grep -v -E '(\(define-fun)'
 ; EXIT: 0
 (set-option :produce-models true)

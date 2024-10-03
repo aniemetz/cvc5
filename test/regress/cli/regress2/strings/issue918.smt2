@@ -1,3 +1,6 @@
+; Fails on parsing back in after dumping post-asserts due to HO, hence we have
+; to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --strings-exp --re-elim=on
 ; EXPECT: sat
 (set-info :smt-lib-version 2.6)

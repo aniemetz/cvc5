@@ -1,3 +1,6 @@
+; Fails on parsing back after dumping post-asserts, hence we have to disable
+; the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --user-pat=strict
 ; EXPECT: unsat
 ; DISABLE-TESTER: unsat-core

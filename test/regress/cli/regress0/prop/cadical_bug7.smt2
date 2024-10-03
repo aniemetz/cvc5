@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i --sat-solver=cadical
 ; EXPECT: sat
 (set-logic QF_LIA)
+(set-option :incremental true)
 (declare-fun v () Int)
 (declare-fun v_ () Int)
 (assert (distinct v v_))

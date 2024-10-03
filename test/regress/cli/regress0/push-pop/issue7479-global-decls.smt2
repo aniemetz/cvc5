@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i
 ; EXPECT: unsat
 (set-logic ALL)
+(set-option :incremental true)
 (set-option :global-declarations true)
 (define-fun y () Bool (> 0 0))
 (assert y)

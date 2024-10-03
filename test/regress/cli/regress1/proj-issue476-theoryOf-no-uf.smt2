@@ -1,3 +1,5 @@
+; We currently have issues printing selectors post-asserts.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: -q
 ; EXPECT: sat
 (set-logic QF_ADTNIA)

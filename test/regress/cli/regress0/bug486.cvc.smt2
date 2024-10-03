@@ -3,7 +3,6 @@
 ; EXPECT: sat
 ; EXPECT: unsat
 (set-logic ALL)
-(set-option :incremental true)
 (declare-sort prin 0)
 (declare-sort form 0)
 (declare-fun signed (prin form) Bool)

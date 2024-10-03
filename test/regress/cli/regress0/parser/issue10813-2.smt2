@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; SCRUBBER: grep -o 'Negative numerals are forbidden in indices'
 ; EXPECT: Negative numerals are forbidden in indices
 ; EXIT: 1

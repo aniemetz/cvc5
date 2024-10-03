@@ -1,4 +1,4 @@
-; COMMAND-LINE: --rlimit-per=100
+; COMMAND-LINE: --rlimit-per=100 -i
 ; SCRUBBER: sed 's/(define-fun .*)/define-fun/g'
 ; EXPECT: unknown
 ; EXPECT: (:reason-unknown resourceout)
@@ -10,7 +10,6 @@
 (set-logic ALL)
 (set-info :smt-lib-version 2.6)
 (set-option :produce-models true)
-(set-option :incremental true)
 
 (declare-fun x () Int)
 (declare-fun y () Int)

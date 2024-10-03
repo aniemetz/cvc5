@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; EXPECT: doesn't include THEORY_QUANTIFIERS
 ; SCRUBBER: grep -o "doesn't include THEORY_QUANTIFIERS"

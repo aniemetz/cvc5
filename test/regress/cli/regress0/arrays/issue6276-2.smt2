@@ -1,6 +1,7 @@
 ; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic QF_ALIA)
+(set-option :incremental true)
 (set-info :status sat)
 (declare-fun i2 () Int)
 (declare-fun arr0 () (Array Int Bool))

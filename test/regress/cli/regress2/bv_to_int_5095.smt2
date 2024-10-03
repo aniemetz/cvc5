@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic QF_BV)
 (set-option :solve-bv-as-int sum)

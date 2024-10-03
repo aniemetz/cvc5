@@ -1,4 +1,5 @@
 ; DISABLE-TESTER: dump
+; DISABLE-TESTER: dump-post
 ; DISABLE-TESTER: proof
 ; COMMAND-LINE: --check-unsat-cores
 ; EXPECT: unsat

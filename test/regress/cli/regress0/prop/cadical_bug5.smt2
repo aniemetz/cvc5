@@ -1,5 +1,6 @@
 ; COMMAND-LINE: -i --sat-solver=cadical
 (set-logic ALL)
+(set-option :incremental true)
 (declare-fun a () Real)
 (assert (= 1.0 (/ 0.0 a)))
 (set-info :status sat)

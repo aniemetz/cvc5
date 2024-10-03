@@ -1,5 +1,6 @@
 ; COMMAND-LINE: -i --sat-solver=cadical
 (set-logic QF_BV)
+(set-option :incremental true)
 (declare-const x Bool)
 (declare-fun p () Bool)
 (assert (not (= (_ bv0 4) (ite p (_ bv0 4) (ite x (_ bv1 4) (_ bv0 4))))))

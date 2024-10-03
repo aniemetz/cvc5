@@ -3,6 +3,7 @@
 ; EXPECT: sat
 ; EXPECT: unsat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-fun a () Int)
 (declare-fun b () Int)
 (declare-fun c () Int)

@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; SCRUBBER: grep -o '(error "Parse Error:'
 ; EXPECT: (error "Parse Error:
 ; EXIT: 1

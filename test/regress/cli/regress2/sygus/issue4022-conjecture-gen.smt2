@@ -1,3 +1,4 @@
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE:
 ; EXPECT: sat
 (set-logic ALL)

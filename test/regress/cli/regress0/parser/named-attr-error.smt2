@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; SCRUBBER: grep -o "Cannot name a term in a binder"
 ; EXPECT: Cannot name a term in a binder

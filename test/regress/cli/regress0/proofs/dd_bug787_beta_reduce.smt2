@@ -1,3 +1,6 @@
+; Fails on parsing back the logic string after dumping post-asserts, hence we
+; have to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; EXPECT: unsat
 (set-logic ALL)
 (declare-const _vp1-1 (_ BitVec 1))

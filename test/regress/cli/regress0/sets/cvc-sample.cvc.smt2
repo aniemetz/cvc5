@@ -5,7 +5,6 @@
 ; EXPECT: unsat
 ; EXPECT: unsat
 ; EXPECT: sat
-(set-option :incremental true)
 (set-logic ALL)
 
 (declare-fun x () (Set Int))

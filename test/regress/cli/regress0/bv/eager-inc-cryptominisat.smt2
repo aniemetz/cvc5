@@ -1,7 +1,6 @@
 ; REQUIRES: cryptominisat
 ; COMMAND-LINE: --incremental --bv-sat-solver=cryptominisat --bitblast=eager
 (set-logic QF_BV)
-(set-option :incremental true)
 (declare-fun a () (_ BitVec 16))
 (declare-fun b () (_ BitVec 16))
 (declare-fun c () (_ BitVec 16))

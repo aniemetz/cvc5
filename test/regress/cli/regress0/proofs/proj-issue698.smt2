@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ; EXPECT: sat
 (set-logic ALL)
 (set-option :check-unsat-cores true)

@@ -1,3 +1,6 @@
+; Fails on parsing back in after dumping post-asserts, hence we have
+; to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --parse-skolem-definitions --print-skolem-definitions
 ; EXPECT: sat
 (set-option :parse-skolem-definitions true)

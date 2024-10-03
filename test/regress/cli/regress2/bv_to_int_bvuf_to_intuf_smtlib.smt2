@@ -1,3 +1,7 @@
+; Currently fails to parse post-asserts due to printing of declarations
+; is not done in the right order ('@purify_27' is used before it is declared).
+; Hence, we disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --solve-bv-as-int=sum --bvand-integer-granularity=1
 ; COMMAND-LINE: --solve-bv-as-int=bitwise --bvand-integer-granularity=1
 ; EXPECT: unsat

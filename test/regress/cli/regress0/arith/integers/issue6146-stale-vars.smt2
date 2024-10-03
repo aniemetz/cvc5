@@ -3,6 +3,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic NIRA)
+(set-option :incremental true)
 (declare-fun i8 () Int)
 (declare-fun i12 () Int)
 (declare-fun r11 () Real)

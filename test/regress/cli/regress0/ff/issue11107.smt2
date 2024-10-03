@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ; REQUIRES: cocoa
 ; EXPECT: sat
 (set-logic QF_FF)

@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic ANIA)
+(set-option :incremental true)
 (declare-const x Bool)
 (set-option :produce-unsat-cores true)
 (declare-fun i () Int)

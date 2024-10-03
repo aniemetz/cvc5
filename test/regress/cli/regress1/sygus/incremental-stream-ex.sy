@@ -5,6 +5,7 @@
 ;EXPECT: feasible
 
 (set-logic LIA)
+(set-option :incremental true)
 
 (synth-fun f ((x Int) (y Int)) Int
   ((Start Int) (StartBool Bool))

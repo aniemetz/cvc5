@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (set-option :miniscope-quant off)
 (declare-fun i2 () Int)
 (declare-fun v6 () Bool)

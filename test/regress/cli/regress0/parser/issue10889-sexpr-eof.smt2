@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; SCRUBBER: grep -o "Expected SMT-LIBv2 s-expression"
 ; EXPECT: Expected SMT-LIBv2 s-expression

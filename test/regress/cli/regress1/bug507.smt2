@@ -1,3 +1,6 @@
+; Fails on parsing back in after dumping post-asserts, hence we have to
+; disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; EXPECT: sat
 (set-logic QF_ALL)
 (set-info :status sat)

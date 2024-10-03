@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ; SCRUBBER: sed -e 's/((x.*//g'
 ; EXPECT: unsat
 ; EXPECT: sat

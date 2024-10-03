@@ -3,6 +3,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic QF_UFLIA)
+(set-option :incremental true)
 (declare-const x1 Bool)
 (declare-const x7 Bool)
 (declare-const x74 Bool)

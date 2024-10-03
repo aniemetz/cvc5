@@ -3,6 +3,7 @@
 ; EXPECT: sat
 ; EXPECT: unsat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-datatypes ((r 0)) (((r_ctor (x Int)))))
 (declare-datatype tup ((mkt (t1 (Array Int Int)) (t2 (Array Int Int)))))
 (declare-datatypes ((q 0)) (((R (x (Array Int r)) (y tup)))))

@@ -1,3 +1,6 @@
+; Dumps BITVECTOR_EAGER_ATOM post-asserts, which we don't support on the API
+; level and can thus not parse back in.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --bitblast=lazy
 ; COMMAND-LINE: --bitblast=eager
 ; COMMAND-LINE: --bv-solver=bitblast-internal

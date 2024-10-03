@@ -1,3 +1,6 @@
+; Fails on parsing back in after dumping post-asserts due to HO, hence we have
+; to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --bitblast=eager 
 ; EXPECT: unsat
 (set-logic QF_BV)

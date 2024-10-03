@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic NIRA)
+(set-option :incremental true)
 (declare-const x Bool)
 (declare-fun i () Int)
 (declare-fun i1 () Int)

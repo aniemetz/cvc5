@@ -1,3 +1,6 @@
+; Dumps BITVECTOR_EAGER_ATOM post-asserts, which we don't support on the API
+; level and can thus not parse back in.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --bitblast=eager --force-logic="QF_BV"
 ; EXPECT: sat
 (set-option :produce-models true)

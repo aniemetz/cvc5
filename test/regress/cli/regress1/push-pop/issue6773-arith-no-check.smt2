@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic NIA)
+(set-option :incremental true)
 (declare-fun i3 () Int)
 (declare-fun i9 () Int)
 (push)

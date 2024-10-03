@@ -2,6 +2,7 @@
 ; EXPECT: unknown
 ; EXPECT: unknown
 (set-logic UF)
+(set-option :incremental true)
 (declare-sort U 0)
 (declare-fun a (U U) U)
 (declare-fun m (U U) Bool)

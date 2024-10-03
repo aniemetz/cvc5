@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic QF_S)
+(set-option :incremental true)
 (declare-fun s () String)
 (assert (distinct 0 (str.len s)))
 (assert (not (str.in_re s (re.+ (re.range "0" "9")))))

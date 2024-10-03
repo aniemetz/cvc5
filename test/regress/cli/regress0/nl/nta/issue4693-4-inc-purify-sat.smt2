@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-const v0 Bool)
 (declare-const v7 Bool)
 (declare-const v12 Bool)

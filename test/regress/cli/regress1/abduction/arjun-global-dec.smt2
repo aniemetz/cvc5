@@ -1,11 +1,10 @@
-; COMMAND-LINE: --produce-abducts
+; COMMAND-LINE: --produce-abducts -i
 ; SCRUBBER: grep -v -E '(\(define-fun)'
 ; EXIT: 0
 
 (set-option :produce-models true)
 (set-option :global-declarations true)
 (set-option :produce-abducts true)
-(set-option :incremental true)
 (set-logic QF_LIA)
 (declare-fun y () Int)
 (define-fun x!0 () Bool (<= 0 y))

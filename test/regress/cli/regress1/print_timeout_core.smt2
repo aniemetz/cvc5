@@ -1,3 +1,6 @@
+; Disable dump-post tester because it runs with --preprocess-only and this
+; option causes this benchmark configuration to not terminate.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: -o timeout-core-benchmark --timeout-core-timeout=500
 ; REQUIRES: no-competition
 ; EXPECT: ;; timeout core

@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; SCRUBBER: grep -o "Symbol 'Array' not declared as a type"
 ; EXPECT: Symbol 'Array' not declared as a type

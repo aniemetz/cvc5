@@ -1,6 +1,8 @@
+; Dumps BITVECTOR_EAGER_ATOM post-asserts, which we don't support on the API
+; level and can thus not parse back in.
+; DISABLE-TESTER: dump-post
 ; COMMAND-LINE: --incremental --bv-sat-solver=cadical --bitblast=eager
 (set-logic QF_BV)
-(set-option :incremental true)
 (declare-fun a () (_ BitVec 16))
 (declare-fun b () (_ BitVec 16))
 (declare-fun c () (_ BitVec 16))

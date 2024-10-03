@@ -1,3 +1,6 @@
+; Fails on parsing back the logic string after dumping post-asserts, hence we
+; have to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; EXPECT: sat
 (set-logic ALL)
 (set-option :solve-int-as-bv 3714675145)

@@ -1,3 +1,8 @@
+; Fails on parsing back in after dumping post-asserts due to printing
+; FLOATINGPOINT_TO_SBV_TOTAL, which we don't export to the API. Hence we have
+; to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
+; COMMAND-LINE: -i
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic QF_AFP)

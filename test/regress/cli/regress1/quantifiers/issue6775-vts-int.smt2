@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic NIA)
+(set-option :incremental true)
 (declare-const x43799 Bool)
 (declare-const x32 Bool)
 (declare-fun v11 () Bool)

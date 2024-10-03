@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; SCRUBBER: grep -o "invalid value '0' at index 0 for operator"
 ; EXPECT: invalid value '0' at index 0 for operator

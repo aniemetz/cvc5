@@ -1,3 +1,6 @@
+; Fails on parsing back in after dumping post-asserts due to introducing lambda
+; parameters starting with '_', hence we have to disable the dump-post tester.
+; DISABLE-TESTER: dump-post
 ; initialize_defs
 ; PROPERTY DEFGEN
 (set-logic QF_UFNIA)

@@ -1,5 +1,6 @@
 ; COMMAND-LINE: -i --bv-solver=bitblast --bv-assert-input
 (set-logic QF_BV)
+(set-option :incremental true)
 (declare-fun N () Bool)
 (assert (not (= (_ bv1 1) (bvnot (ite N (_ bv1 1) (_ bv0 1))))))
 (push 1)

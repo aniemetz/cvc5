@@ -1,4 +1,3 @@
-; DISABLE-TESTER: dump
 ; REQUIRES: no-competition
 ; SCRUBBER: grep -o "expecting bit-width > 0"
 ; EXPECT: expecting bit-width > 0

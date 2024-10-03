@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: unsat
 (set-logic QF_UFLIA)
+(set-option :incremental true)
 (declare-fun x (Int) Bool)
 (declare-fun y (Int) Bool)
 (declare-fun z (Int) Int)

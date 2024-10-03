@@ -1,3 +1,5 @@
+; We currently have issues printing selectors post-asserts.
+; DISABLE-TESTER: dump-post
 ; EXPECT: sat
 (set-logic QF_UFDTLIA)
 (set-info :status sat)

@@ -2,6 +2,7 @@
 ; EXPECT: sat
 ; EXPECT: unsat
 (set-logic ALL)
+(set-option :incremental true)
 (declare-fun i4 () Int)
 (declare-fun i6 () Int)
 (declare-fun i7 () Int)

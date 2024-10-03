@@ -1,11 +1,10 @@
-; COMMAND-LINE: --produce-models
+; COMMAND-LINE: --produce-models -i
 ; EXPECT: sat
 ; EXPECT: (
 ; EXPECT: (define-fun s1 () Int 2)
 ; EXPECT: (define-fun s2 () Int 1)
 ; EXPECT: )
 (set-logic ALL)
-(set-option :incremental true)
 (set-option :produce-models true)
 (declare-fun s1 () Int)
 (declare-fun s2 () Int)

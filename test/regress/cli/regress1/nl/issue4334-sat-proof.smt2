@@ -4,6 +4,7 @@
 ; EXPECT: sat
 ; EXPECT: sat
 (set-logic QF_NIA)
+(set-option :incremental true)
 (set-option :produce-unsat-cores true)
 (set-option :nl-ext-purify true)
 (declare-const v0 Bool)

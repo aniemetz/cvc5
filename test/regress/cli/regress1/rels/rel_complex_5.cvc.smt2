@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ; EXPECT: unsat
 (set-option :incremental true)
 (set-logic ALL)

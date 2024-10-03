@@ -1,3 +1,4 @@
+; COMMAND-LINE: -i
 ; EXPECT: unsat
 ; EXPECT: sat
 (set-option :global-declarations true)
