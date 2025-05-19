@@ -298,12 +298,15 @@ void PropEngine::assertLemmasInternal(
     bool inprocess,
     bool local)
 {
-  // notify skolem definitions first to ensure that the computation of
-  // when a literal contains a skolem is accurate in the calls below.
-  Trace("prop") << "Notify skolem definitions..." << std::endl;
-  for (const theory::SkolemLemma& lem : ppLemmas)
+  if (!removable)
   {
-    d_theoryProxy->notifySkolemDefinition(lem.getProven(), lem.d_skolem);
+    // notify skolem definitions first to ensure that the computation of
+    // when a literal contains a skolem is accurate in the calls below.
+    Trace("prop") << "Notify skolem definitions..." << std::endl;
+    for (const theory::SkolemLemma& lem : ppLemmas)
+    {
+      d_theoryProxy->notifySkolemDefinition(lem.getProven(), lem.d_skolem);
+    }
   }
   // Assert to the SAT solver first
   Trace("prop") << "Push to SAT..." << std::endl;
@@ -330,16 +333,21 @@ void PropEngine::assertLemmasInternal(
   // e.g. for string reduction lemmas, where preregistration lemmas are
   // introduced for skolems that appear in reductions. Moving the above
   // block after the one below has mixed performance on SMT-LIB strings logics.
-  Trace("prop") << "Notify assertions..." << std::endl;
-  // also add to the decision engine, where notice we don't need proofs
-  if (!trn.isNull())
+  if (!removable)
   {
-    // notify the theory proxy of the lemma
-    d_theoryProxy->notifyAssertion(trn.getProven(), TNode::null(), true, local);
-  }
-  for (const theory::SkolemLemma& lem : ppLemmas)
-  {
-    d_theoryProxy->notifyAssertion(lem.getProven(), lem.d_skolem, true, local);
+    Trace("prop") << "Notify assertions..." << std::endl;
+    // also add to the decision engine, where notice we don't need proofs
+    if (!trn.isNull())
+    {
+      // notify the theory proxy of the lemma
+      d_theoryProxy->notifyAssertion(
+          trn.getProven(), TNode::null(), true, local);
+    }
+    for (const theory::SkolemLemma& lem : ppLemmas)
+    {
+      d_theoryProxy->notifyAssertion(
+          lem.getProven(), lem.d_skolem, true, local);
+    }
   }
   Trace("prop") << "Finish " << trn << std::endl;
 }
