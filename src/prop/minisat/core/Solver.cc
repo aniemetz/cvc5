@@ -408,6 +408,9 @@ bool Solver::addClause_(vec<Lit>& ps, bool removable, ClauseId& id)
     sort(ps);
     Lit p; int i, j;
 
+    // We only mark clauses as removable if incremental solving is enabled.
+    removable = options().base.incrementalSolving && removable;
+
     // Which user-level to assert this clause at
     int clauseLevel = (removable && !assertionLevelOnly()) ? 0 : assertionLevel;
 
