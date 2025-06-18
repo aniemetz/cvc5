@@ -16,6 +16,7 @@ runs:
         PACKAGE: ${{ inputs.asset-filename }}
       run: |
         import os
+        import re
         from github import Github
 
         refname = os.getenv('GITHUB_REF_NAME')
