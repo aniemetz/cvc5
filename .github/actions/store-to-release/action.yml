@@ -40,4 +40,5 @@ runs:
               end = m.start()
               relmsg = content[start:end].strip()
           rel = repo.create_git_release(refname, refname, relmsg)
+          print(relmsg)
         rel.upload_asset(os.getenv('PACKAGE'))
