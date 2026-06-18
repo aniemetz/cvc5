@@ -22,6 +22,7 @@
 #include "prop/cnf_stream.h"
 #include "prop/sat_solver.h"
 #include "smt/env_obj.h"
+#include "theory/bv/abstract/abstraction_module.h"
 #include "theory/bv/bitblast/node_bitblaster.h"
 #include "theory/bv/bv_solver.h"
 #include "theory/bv/proof_checker.h"
@@ -132,6 +133,9 @@ class BVSolverBitblast : public BVSolver
 
   /** Option to enable/disable bit-level propagation. */
   bool d_propagate;
+
+  /** The associated CEGAR abstraction module for bit-vector arithmetic. */
+  std::unique_ptr<abstract::AbstractionModule> d_am;
 
   /** Notifies when reset-assertion was called. */
   std::unique_ptr<NotifyResetAssertions> d_resetNotify;

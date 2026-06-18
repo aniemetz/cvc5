@@ -122,6 +122,8 @@ BVSolverBitblast::BVSolverBitblast(Env& env,
       d_factLiteralCache(context()),
       d_literalFactCache(context()),
       d_propagate(options().bv.bitvectorPropagate),
+      d_am(options().bv.bvAbstraction ? new abstract::AbstractionModule(env)
+                                      : nullptr),
       d_resetNotify(new NotifyResetAssertions(userContext()))
 {
   if (env.isTheoryProofProducing())
@@ -176,8 +178,13 @@ void BVSolverBitblast::postCheck(Theory::Effort level)
       }
       else
       {
-        d_bitblaster->bbAtom(fact);
-        Node bb_fact = d_bitblaster->getStoredBBAtom(fact);
+        // Abstract arithmetic subterms before bit-blasting; the fresh
+        // abstraction constants are bit-blasted as variables, so the
+        // multiplier/divider circuits are never built. The fact -> literal
+        // bookkeeping still keys on the original `fact`.
+        Node afact = d_am ? d_am->abstract(fact) : fact;
+        d_bitblaster->bbAtom(afact);
+        Node bb_fact = d_bitblaster->getStoredBBAtom(afact);
         d_cnfStream->convertAndAssert(bb_fact, false, false);
       }
     }
@@ -200,8 +207,9 @@ void BVSolverBitblast::postCheck(Theory::Effort level)
       }
       else
       {
-        d_bitblaster->bbAtom(fact);
-        Node bb_fact = d_bitblaster->getStoredBBAtom(fact);
+        Node afact = d_am ? d_am->abstract(fact) : fact;
+        d_bitblaster->bbAtom(afact);
+        Node bb_fact = d_bitblaster->getStoredBBAtom(afact);
         d_cnfStream->ensureLiteral(bb_fact);
         lit = d_cnfStream->getLiteral(bb_fact);
       }
