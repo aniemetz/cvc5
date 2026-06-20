@@ -117,11 +117,14 @@ Node AbstractionModule::abstract(TNode fact)
 
 void AbstractionModule::check(std::vector<Node>& lemmas)
 {
-  Node falseNode = nodeManager()->mkConst(false);
+  NodeManager* nm = nodeManager();
+  Node falseNode = nm->mkConst(false);
+  uint64_t lim = std::max<uint64_t>(options().bv.bvAbstractionValueLimiter, 1);
   std::vector<Node> args(3);
   std::vector<Node> vals(3);
   for (const auto& [t, abstr] : d_absToTerm)
   {
+    Kind kind = abstr.d_kind;
     Node x = abstr.d_x;
     Node s = abstr.d_s;
     Node valX = d_bv->getValue(x);
@@ -129,10 +132,28 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
     Node valT = d_bv->getValue(t);
     Assert(valX.isConst() && valS.isConst() && valT.isConst())
         << "non-const operand value: " << valX << " " << valS << " " << valT;
+
+    // The abstraction `t = op(x, s)` is consistent with the model iff the
+    // actual operator applied to the operand values equals the value of `t`. If
+    // so, there is nothing to refine for this term.
+    Node value = rewrite(nm->mkNode(kind, valX, valS));
+    if (value == valT)
+    {
+      continue;
+    }
+
+    // Tier 1/2: collect every Table-2 lemma scheme that is violated under the
+    // current model, i.e., whose instantiation constant-folds to false when
+    // x, s, t are substituted by their model values.
+    //
+    // Note: We do not use the Evaluator here since it only substitutes
+    //       *variable* keys (it matches `args` entries only for nodes with
+    //       isVar()) and leaves a compound key unsubstituted (thus would
+    //       evaluate to a non-constant, and so miss the violation).
     args = {x, s, t};
     vals = {valX, valS, valT};
-    for (const std::unique_ptr<AbstractionLemma>& lemma :
-         d_lemmas.lemmas(abstr.d_kind))
+    size_t numLemmas = lemmas.size();
+    for (const std::unique_ptr<AbstractionLemma>& lemma : d_lemmas.lemmas(kind))
     {
       Node inst = lemma->instance(x, s, t);
       if (inst.isNull())
@@ -143,20 +164,35 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
       {
         continue;
       }
-      // The lemma is a refinement candidate iff it is violated under the
-      // current model, i.e., substituting x, s, t by their model values and
-      // constant-folding yields false.
-      //
-      // Note: We do not use the Evaluator here since it only substitutes
-      //       *variable* keys as it matches `args` entries only for nodes with
-      //       isVar()) and leaves a compound key unsubstituted (thus would
-      //       evaluate to a non-constant, and so miss the violation).
       Node subst =
           inst.substitute(args.begin(), args.end(), vals.begin(), vals.end());
       if (rewrite(subst) == falseNode)
       {
         lemmas.push_back(inst);
       }
+    }
+    // If a Table-2 lemma ruled out this spurious model, move on.
+    if (lemmas.size() != numLemmas)
+    {
+      continue;
+    }
+
+    // No tier-1/2 lemma violated, fall back to value instantiation if we have
+    // not exhausted the instantiation budget for this term yet.
+    uint64_t budget = utils::getSize(t) / lim;
+    if (d_valueInstCount[t] < budget)
+    {
+      // Tier 3: value instantiation. Rule out this single spurious model value
+      // with (x = v_x AND s = v_s) => t = (v_x op v_s).
+      Node prem = nm->mkNode(Kind::AND, x.eqNode(valX), s.eqNode(valS));
+      lemmas.push_back(nm->mkNode(Kind::IMPLIES, prem, t.eqNode(value)));
+      ++d_valueInstCount[t];
+    }
+    else
+    {
+      // Tier 4: bit-blasting fallback. Assert t = op(x, s), forcing the real
+      // circuit to be bit-blasted; `t` is fully constrained from now on.
+      lemmas.push_back(t.eqNode(nm->mkNode(kind, x, s)));
     }
   }
 }

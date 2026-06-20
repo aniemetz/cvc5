@@ -153,3 +153,11 @@ name   = "Bitvector Theory"
   type       = "uint64_t"
   default    = "32"
   help       = "minimum bit-width of bit-vector arithmetic terms to abstract with --bv-abstraction"
+
+[[option]]
+  name       = "bvAbstractionValueLimiter"
+  category   = "expert"
+  long       = "bv-abstraction-value-limiter=N"
+  type       = "uint64_t"
+  default    = "8"
+  help       = "per-term budget of tier-3 value-instantiation refinement lemmas is bit-width/N before falling back to bit-blasting (--bv-abstraction)"

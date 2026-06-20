@@ -142,6 +142,14 @@ class AbstractionModule : protected EnvObj
 
   /** Memoization cache for abstract(). */
   std::unordered_map<Node, Node> d_cache;
+
+  /**
+   * Number of tier-3 value-instantiation lemmas added so far for each
+   * abstraction constant. Once this reaches the per-term budget
+   * (bit-width / bvAbstractionValueInstDivisor), the tier-4 bit-blasting
+   * fallback is used instead.
+   */
+  std::unordered_map<Node, uint64_t> d_valueInstCount;
 };
 
 }  // namespace abstract

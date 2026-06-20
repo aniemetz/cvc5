@@ -296,6 +296,7 @@ set(regress_0_tests
   regress0/bv-conv-value-refine.smt2
   regress0/bv/abstract/bv_udiv_pow2.smt2
   regress0/bv/abstract/bv_urem_pow2.smt2
+  regress0/bv/abstract/cross-term-div-mul-rem.smt2
   regress0/bv/abstract/eagerrefine1.smt2
   regress0/bv/abstract/murxla-346218efd24c9aba.min.smt2
   regress0/bv/abstract/murxla-67f411058e7b0ea7.min.smt2
