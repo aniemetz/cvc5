@@ -46,7 +46,7 @@ TheoryBV::TheoryBV(Env& env,
   switch (options().bv.bvSolver)
   {
     case options::BVSolver::BITBLAST:
-      d_internal.reset(new BVSolverBitblast(env, &d_state, d_im));
+      d_internal.reset(new BVSolverBitblast(env, &d_state, d_im, this));
       break;
 
     default:

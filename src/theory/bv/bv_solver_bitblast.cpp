@@ -106,7 +106,8 @@ class BBRegistrar : public prop::Registrar
 
 BVSolverBitblast::BVSolverBitblast(Env& env,
                                    TheoryState* s,
-                                   TheoryInferenceManager& inferMgr)
+                                   TheoryInferenceManager& inferMgr,
+                                   TheoryBV* bv)
     : BVSolver(env, *s, inferMgr),
       d_bitblaster(new NodeBitblaster(env, s)),
       d_bbRegistrar(new BBRegistrar(d_bitblaster.get())),
@@ -122,8 +123,9 @@ BVSolverBitblast::BVSolverBitblast(Env& env,
       d_factLiteralCache(context()),
       d_literalFactCache(context()),
       d_propagate(options().bv.bitvectorPropagate),
-      d_am(options().bv.bvAbstraction ? new abstract::AbstractionModule(env)
+      d_am(options().bv.bvAbstraction ? new abstract::AbstractionModule(env, bv)
                                       : nullptr),
+      d_bv(bv),
       d_resetNotify(new NotifyResetAssertions(userContext()))
 {
   if (env.isTheoryProofProducing())
@@ -222,6 +224,13 @@ void BVSolverBitblast::postCheck(Theory::Effort level)
   std::vector<prop::SatLiteral> assumptions(d_assumptions.begin(),
                                             d_assumptions.end());
   prop::SatValue val = d_satSolver->solve(assumptions);
+
+  // CEGAR refinement loop: if the over-approximation is sat, restore
+  // consistency with the abstracted terms by asserting refinement lemmas.
+  if (d_am && val == prop::SatValue::SAT_VALUE_TRUE)
+  {
+    val = refine(assumptions);
+  }
 
   if (val == prop::SatValue::SAT_VALUE_FALSE)
   {
@@ -427,6 +436,62 @@ void BVSolverBitblast::handleEagerAtom(TNode fact, bool assertFact)
   }
   // Clear cache since we only need to do this once per bit-blasted atom.
   registeredAtoms.clear();
+}
+
+prop::SatValue BVSolverBitblast::refine(
+    const std::vector<prop::SatLiteral>& assumptions)
+{
+  Assert(d_am != nullptr);
+  NodeManager* nm = nodeManager();
+  prop::SatValue result = prop::SatValue::SAT_VALUE_TRUE;
+  while (true)
+  {
+    // The model changes after every solve in this loop, so invalidate the
+    // theory's model-value cache before querying it. TheoryBV::getValue
+    // recursively evaluates a term from its (bit-blasted) leaves.
+    d_bv->invalidateModelCache();
+    std::vector<Node> lemmas;
+    d_am->check(lemmas);
+    if (lemmas.empty())
+    {
+      // The model is consistent with all abstracted terms: genuinely sat.
+      break;
+    }
+    Trace("bv-abstraction")
+        << "refine: adding " << lemmas.size() << " lemma(s)" << std::endl;
+    // Assert the refinement lemmas directly to this solver's private CNF stream
+    // and SAT solver, *not* via the theory inference manager (d_im.lemma()).
+    //
+    // The abstraction is internal to BVSolverBitblast, which bit-blasts to
+    // a SAT solver instance that is local to the bit-blasting solver.
+    // The abstraction constants are fresh skolems introduced at bit-blasting
+    // time, thus invisible to the CDCL(T) SAT solver instance and TheoryEngine
+    // (the only thing surfaced to the engine is the final conflict, via
+    // d_im.trustedConflict()).
+    //
+    // A refinement lemma constrains these internal abstraction constants,
+    // thus we do not send it to the main SAT solver via d_im.lemma() (since
+    // it is unaware of the abstraction).
+    //
+    // The lemmas are T_BV-valid given the abstracted term semantics, hence
+    // sound to assert permanently (they accumulate across solve calls and are
+    // dropped when the SAT solver is rebuilt on reset-assertions). A lemma is
+    // an arbitrary Boolean combination of bit-vector atoms, so we assert it
+    // through the CNF stream and let the bit-blast registrar bit-blast the
+    // atoms it contains (the BITVECTOR_EAGER_ATOM mechanism). Rewriting
+    // normalizes atoms (e.g. bvuge) into the forms the registrar recognizes.
+    for (const Node& lem : lemmas)
+    {
+      Node eager = nm->mkNode(Kind::BITVECTOR_EAGER_ATOM, rewrite(lem));
+      handleEagerAtom(eager, true);
+    }
+    result = d_satSolver->solve(assumptions);
+    if (result != prop::SatValue::SAT_VALUE_TRUE)
+    {
+      break;  // unsat
+    }
+  }
+  return result;
 }
 
 }  // namespace bv

@@ -9,14 +9,16 @@
  *
  * The bit-vector arithmetic abstraction module.
  *
- * Implements the abstraction half of the CEGAR strategy of "Scalable
- * Bit-Blasting with Abstractions" (Niemetz, Preiner, Zohar, CAV 2024): every
- * "expensive" arithmetic term `op(x, s)` (op in {bvmul, bvudiv, bvurem}) whose
- * bit-width is at least a configurable threshold is replaced by a fresh
+ * Implements the abstraction module of the CEGAR strategy of "Scalable
+ * Bit-Blasting with Abstractions" (Niemetz, Preiner, Zohar, CAV 2024).
+ *
+ * Every "expensive" arithmetic term `op(x, s)` (op in {bvmul, bvudiv, bvurem})
+ * whose bit-width is at least a configurable threshold is replaced by a fresh
  * bit-vector constant `t` of the same sort. This over-approximates the formula
- * (the multiplier/divider circuit is never bit-blasted); consistency is later
- * restored by the refinement loop via the lemma schemes in
- * abstraction_lemmas.h.
+ * (the multiplier/divider circuit is never bit-blasted). If an abstraction for
+ * is consistent wrt. the semantics of the abstracted arithmetic operation,
+ * it is refined via a tiered refined strategy. The first tier is implemented
+ * by the lemma schemes in abstraction_lemmas.h.
  */
 
 #include "cvc5_private.h"
@@ -33,6 +35,9 @@
 namespace cvc5::internal {
 namespace theory {
 namespace bv {
+
+class TheoryBV;
+
 namespace abstract {
 
 /** An arithmetic term `op(x, s)` that has been abstracted by a constant. */
@@ -54,7 +59,12 @@ struct AbstractedTerm
 class AbstractionModule : protected EnvObj
 {
  public:
-  AbstractionModule(Env& env);
+  /**
+   * Constructor.
+   * @param env The associated environment.
+   * @param bv  The associated TheoryBV.
+   */
+  AbstractionModule(Env& env, TheoryBV* bv);
 
   /**
    * Replace every abstractable arithmetic subterm of `fact` by a fresh
@@ -69,6 +79,23 @@ class AbstractionModule : protected EnvObj
    * @return The abstracted fact (equal to `fact` if nothing was abstracted).
    */
   Node abstract(TNode fact);
+
+  /**
+   * Check the current model for consistency with every abstracted term and
+   * collect tier-1/2 refinement lemmas (the Table-2 schemes in
+   * abstraction_lemmas.h) that are violated under the model.
+   *
+   * For each abstracted term `t = op(x, s)` the operands and `t` are evaluated
+   * to their model values via `getValue`, and every lemma scheme for `op` whose
+   * instantiation evaluates to false under the model is added to `lemmas`. An
+   * empty result means the model is consistent with all abstracted terms.
+   *
+   * @param getValue Returns the model value of a (sub)term, recursively
+   *                 evaluated from its leaves (e.g. TheoryBV::getValue). May
+   *                 return a non-constant if the value is undetermined.
+   * @param lemmas   Output list of violated refinement lemmas to assert.
+   */
+  void check(std::vector<Node>& lemmas);
 
   /** @return True if `n` is an abstraction constant introduced by this module.
    */
@@ -90,6 +117,8 @@ class AbstractionModule : protected EnvObj
   const LemmaRegistry& getLemmaRegistry() const { return d_lemmas; }
 
  private:
+  TheoryBV* d_bv;
+
   /** @return True if `n` is a term that should be abstracted. */
   bool abstractable(TNode n) const;
 
