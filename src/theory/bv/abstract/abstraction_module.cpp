@@ -34,7 +34,21 @@ AbstractionModule::AbstractionModule(Env& env, TheoryBV* bv)
       // size 3 instead of guarding each lemma separately, so the refinement
       // loop can apply every scheme unconditionally.
       d_threshold(std::max<uint64_t>(options().bv.bvAbstractionSize, 3)),
-      d_lemmas(nodeManager())
+      d_lemmas(nodeManager()),
+      d_stats(statisticsRegistry())
+{
+}
+
+AbstractionModule::Statistics::Statistics(StatisticsRegistry& reg)
+    : d_numAbstractions(
+          reg.registerInt("theory::bv::abstraction::numAbstractions")),
+      d_numChecks(reg.registerInt("theory::bv::abstraction::numChecks")),
+      d_numLemmasTier12(
+          reg.registerInt("theory::bv::abstraction::numLemmasTier12")),
+      d_numLemmasTier3(
+          reg.registerInt("theory::bv::abstraction::numLemmasTier3")),
+      d_numLemmasTier4(
+          reg.registerInt("theory::bv::abstraction::numLemmasTier4"))
 {
 }
 
@@ -68,6 +82,7 @@ Node AbstractionModule::abstractTerm(TNode op)
   Node t = NodeManager::mkDummySkolem("bvabs", op.getType());
   d_termToAbs.emplace(op, t);
   d_absToTerm.emplace(t, AbstractedTerm{op.getKind(), op[0], op[1]});
+  ++d_stats.d_numAbstractions;
   return t;
 }
 
@@ -117,6 +132,7 @@ Node AbstractionModule::abstract(TNode fact)
 
 void AbstractionModule::check(std::vector<Node>& lemmas)
 {
+  ++d_stats.d_numChecks;
   NodeManager* nm = nodeManager();
   Node falseNode = nm->mkConst(false);
   uint64_t lim = std::max<uint64_t>(options().bv.bvAbstractionValueLimiter, 1);
@@ -174,6 +190,8 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
     // If a Table-2 lemma ruled out this spurious model, move on.
     if (lemmas.size() != numLemmas)
     {
+      d_stats.d_numLemmasTier12 +=
+          static_cast<int64_t>(lemmas.size() - numLemmas);
       continue;
     }
 
@@ -187,14 +205,36 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
       Node prem = nm->mkNode(Kind::AND, x.eqNode(valX), s.eqNode(valS));
       lemmas.push_back(nm->mkNode(Kind::IMPLIES, prem, t.eqNode(value)));
       ++d_valueInstCount[t];
+      ++d_stats.d_numLemmasTier3;
     }
     else
     {
       // Tier 4: bit-blasting fallback. Assert t = op(x, s), forcing the real
       // circuit to be bit-blasted; `t` is fully constrained from now on.
       lemmas.push_back(t.eqNode(nm->mkNode(kind, x, s)));
+      ++d_stats.d_numLemmasTier4;
     }
   }
+}
+
+bool AbstractionModule::isModelConsistent()
+{
+  NodeManager* nm = nodeManager();
+  for (const auto& [t, abstr] : d_absToTerm)
+  {
+    Node valX = d_bv->getValue(abstr.d_x);
+    Node valS = d_bv->getValue(abstr.d_s);
+    Node valT = d_bv->getValue(t);
+    if (!valX.isConst() || !valS.isConst() || !valT.isConst())
+    {
+      continue;
+    }
+    if (rewrite(nm->mkNode(abstr.d_kind, valX, valS)) != valT)
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool AbstractionModule::isAbstraction(TNode n) const

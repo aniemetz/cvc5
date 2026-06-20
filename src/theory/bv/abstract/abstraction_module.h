@@ -31,6 +31,7 @@
 #include "expr/node.h"
 #include "smt/env_obj.h"
 #include "theory/bv/abstract/abstraction_lemmas.h"
+#include "util/statistics_stats.h"
 
 namespace cvc5::internal {
 namespace theory {
@@ -116,6 +117,13 @@ class AbstractionModule : protected EnvObj
   /** @return The refinement lemma registry. */
   const LemmaRegistry& getLemmaRegistry() const { return d_lemmas; }
 
+  /**
+   * @return True if every abstracted term is consistent with the current model,
+   * i.e. `op(v_x, v_s) == v_t` for each `t = op(x, s)`. Used as a debug check
+   * after the refinement loop concludes sat.
+   */
+  bool isModelConsistent();
+
  private:
   TheoryBV* d_bv;
 
@@ -150,6 +158,22 @@ class AbstractionModule : protected EnvObj
    * fallback is used instead.
    */
   std::unordered_map<Node, uint64_t> d_valueInstCount;
+
+  /** Statistics for the abstraction module. */
+  struct Statistics
+  {
+    Statistics(StatisticsRegistry& reg);
+    /** Number of arithmetic terms abstracted. */
+    IntStat d_numAbstractions;
+    /** Number of refinement consistency checks (refinement rounds). */
+    IntStat d_numChecks;
+    /** Number of tier-1/2 (Table-2 scheme) refinement lemmas added. */
+    IntStat d_numLemmasTier12;
+    /** Number of tier-3 value-instantiation refinement lemmas added. */
+    IntStat d_numLemmasTier3;
+    /** Number of tier-4 bit-blasting fallback lemmas added. */
+    IntStat d_numLemmasTier4;
+  } d_stats;
 };
 
 }  // namespace abstract

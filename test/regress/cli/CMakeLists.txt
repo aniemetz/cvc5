@@ -304,6 +304,7 @@ set(regress_0_tests
   regress0/bv/abstract/murxla-cc7db96bcf2e620d.min.smt2
   regress0/bv/abstract/murxla-d9523963f3a24521.min.smt2
   regress0/bv/abstract/red-bench-8002.smt2
+  regress0/bv/abstract/sat-mul-refine.smt2
   regress0/bv/abstract/unsatcore1.smt2
   regress0/bv/ackermann1.smt2
   regress0/bv/ackermann2.smt2

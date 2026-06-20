@@ -455,6 +455,9 @@ prop::SatValue BVSolverBitblast::refine(
     if (lemmas.empty())
     {
       // The model is consistent with all abstracted terms: genuinely sat.
+      Assert(d_am->isModelConsistent()) << "BV abstraction reported sat but "
+                                           "the model is inconsistent with an "
+                                           "abstracted term";
       break;
     }
     Trace("bv-abstraction")
