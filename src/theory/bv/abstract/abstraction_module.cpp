@@ -242,11 +242,10 @@ bool AbstractionModule::isAbstraction(TNode n) const
   return d_absToTerm.find(n) != d_absToTerm.end();
 }
 
-const AbstractedTerm& AbstractionModule::getAbstractedTerm(TNode n) const
+TNode AbstractionModule::getAbstraction(TNode n) const
 {
-  auto it = d_absToTerm.find(n);
-  Assert(it != d_absToTerm.end());
-  return it->second;
+  Assert(isAbstractedTerm(n));
+  return d_termToAbs.at(n);
 }
 
 }  // namespace abstract

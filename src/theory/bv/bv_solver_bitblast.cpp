@@ -386,6 +386,11 @@ Node BVSolverBitblast::getValue(TNode node, bool initialize)
     return node;
   }
 
+  if (d_am && d_am->abstractable(node) && d_am->isAbstractedTerm(node))
+  {
+    node = d_am->getAbstraction(node);
+  }
+
   NodeManager* nm = node.getNodeManager();
   if (!d_bitblaster->hasBBTerm(node))
   {

@@ -98,15 +98,22 @@ class AbstractionModule : protected EnvObj
    */
   void check(std::vector<Node>& lemmas);
 
-  /** @return True if `n` is an abstraction constant introduced by this module.
+  /**
+   * @return True if `n` is an abstraction constant introduced by this module.
    */
   bool isAbstraction(TNode n) const;
 
+  /** @return True if arithmetic term `n` has been abstracted by a constant. */
+  bool isAbstractedTerm(TNode n) const
+  {
+    return d_termToAbs.find(n) != d_termToAbs.end();
+  }
+
   /**
-   * @return The arithmetic term abstracted by constant `n`. `n` must be an
-   *         abstraction constant (see isAbstraction()).
+   * @return The abstraction introduced for given node. Asserts that the
+   *         node has been abstracted.
    */
-  const AbstractedTerm& getAbstractedTerm(TNode n) const;
+  TNode getAbstraction(TNode n) const;
 
   /** @return The map from abstraction constants to their abstracted terms. */
   const std::unordered_map<Node, AbstractedTerm>& getAbstractions() const
@@ -124,11 +131,11 @@ class AbstractionModule : protected EnvObj
    */
   bool isModelConsistent();
 
- private:
-  TheoryBV* d_bv;
-
   /** @return True if `n` is a term that should be abstracted. */
   bool abstractable(TNode n) const;
+
+ private:
+  TheoryBV* d_bv;
 
   /**
    * Return the abstraction constant for arithmetic term `op`, creating a fresh
