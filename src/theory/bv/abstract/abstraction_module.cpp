@@ -16,6 +16,7 @@
 
 #include "expr/node_manager.h"
 #include "options/bv_options.h"
+#include "smt/env.h"
 #include "theory/bv/theory_bv.h"
 #include "theory/bv/theory_bv_utils.h"
 
@@ -96,6 +97,21 @@ Node AbstractionModule::abstract(TNode fact)
     auto it = d_cache.find(cur);
     if (it == d_cache.end())
     {
+      // Do not descend into terms of other theories (e.g. array selects).
+      // The bit-blaster treats them as opaque leaves (variables), and they are
+      // the terms shared with the other theory. Rebuilding below such a term
+      // would create a NEW node (e.g. a select over an abstracted index)
+      // distinct from the shared one: the other theory would continue to
+      // reason about the original while this solver constrains the copy,
+      // silently disconnecting the two (unsound under theory combination).
+      theory::TheoryId tid = d_env.theoryOf(cur);
+      if (cur.getNumChildren() > 0 && tid != theory::THEORY_BV
+          && tid != theory::THEORY_BOOL)
+      {
+        d_cache.emplace(cur, cur);
+        visit.pop_back();
+        continue;
+      }
       // First time we see `cur`: mark it and queue its children.
       d_cache.emplace(cur, Node::null());
       visit.insert(visit.end(), cur.begin(), cur.end());
