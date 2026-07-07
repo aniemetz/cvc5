@@ -128,6 +128,8 @@ class BVSolver : protected EnvObj
     return Node::null();
   }
 
+  virtual bool isModelConsistent() const { return true; }
+
  protected:
   TheoryState& d_state;
   TheoryInferenceManager& d_im;

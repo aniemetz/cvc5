@@ -75,6 +75,12 @@ class BVSolverBitblast : public BVSolver
    */
   Node getValue(TNode node, bool initialize) override;
 
+  /**
+   * @return True if current model is consistent.
+   * @note Can only ever be inconsistent in the case of abstraction.
+   */
+  bool isModelConsistent() const override { return d_isModelConsistent; }
+
  private:
   /** Initialize SAT solver and CNF stream.  */
   void initSatSolver();
@@ -154,6 +160,12 @@ class BVSolverBitblast : public BVSolver
 
   /** Notifies when reset-assertion was called. */
   std::unique_ptr<NotifyResetAssertions> d_resetNotify;
+
+  /**
+   * Cache if current model is consistent. Can only ever be inconsistent in the
+   * case of abstraction.
+   */
+  bool d_isModelConsistent;
 };
 
 }  // namespace bv

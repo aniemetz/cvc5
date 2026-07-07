@@ -40,6 +40,7 @@ TheoryBV::TheoryBV(Env& env,
       d_im(env, *this, d_state, "theory::bv::"),
       d_notify(d_im),
       d_invalidateModelCache(context(), true),
+      d_inPostCheck(false),
       d_stats(statisticsRegistry(), "theory::bv::"),
       d_checker(nodeManager())
 {
@@ -146,8 +147,10 @@ bool TheoryBV::preCheck(Effort e) { return d_internal->preCheck(e); }
 
 void TheoryBV::postCheck(Effort e)
 {
+  d_inPostCheck = true;
   d_invalidateModelCache = true;
   d_internal->postCheck(e);
+  d_inPostCheck = false;
 }
 
 bool TheoryBV::preNotifyFact(
@@ -343,6 +346,8 @@ void TheoryBV::ppStaticLearn(TNode in, std::vector<TrustNode>& learned)
 
 Node TheoryBV::getValue(TNode node)
 {
+  Assert(d_inPostCheck || d_internal->isModelConsistent());
+
   if (d_invalidateModelCache.get())
   {
     d_modelCache.clear();

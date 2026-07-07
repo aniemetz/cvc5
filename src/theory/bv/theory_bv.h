@@ -138,6 +138,8 @@ class TheoryBV : public Theory
   /** Flag indicating whether `d_modelCache` should be invalidated. */
   context::CDO<bool> d_invalidateModelCache;
 
+  bool d_inPostCheck;
+
   /**
    * Cache for getValue() calls.
    *

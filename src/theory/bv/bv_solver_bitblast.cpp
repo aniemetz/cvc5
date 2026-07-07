@@ -126,7 +126,8 @@ BVSolverBitblast::BVSolverBitblast(Env& env,
       d_am(options().bv.bvAbstraction ? new abstract::AbstractionModule(env, bv)
                                       : nullptr),
       d_bv(bv),
-      d_resetNotify(new NotifyResetAssertions(userContext()))
+      d_resetNotify(new NotifyResetAssertions(userContext())),
+      d_isModelConsistent(true)
 {
   if (env.isTheoryProofProducing())
   {
@@ -444,6 +445,7 @@ prop::SatValue BVSolverBitblast::refine(
   Assert(d_am != nullptr);
   NodeManager* nm = nodeManager();
   prop::SatValue result = prop::SatValue::SAT_VALUE_TRUE;
+  d_isModelConsistent = false;
   while (true)
   {
     // The model changes after every solve in this loop, so invalidate the
@@ -458,6 +460,7 @@ prop::SatValue BVSolverBitblast::refine(
       Assert(d_am->isModelConsistent()) << "BV abstraction reported sat but "
                                            "the model is inconsistent with an "
                                            "abstracted term";
+      d_isModelConsistent = true;
       break;
     }
     Trace("bv-abstraction")

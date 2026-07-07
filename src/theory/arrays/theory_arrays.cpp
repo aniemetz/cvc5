@@ -32,6 +32,7 @@
 using namespace std;
 
 namespace cvc5::internal {
+
 namespace theory {
 namespace arrays {
 
