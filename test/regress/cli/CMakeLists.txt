@@ -294,6 +294,9 @@ set(regress_0_tests
   regress0/buggy-ite.smt2
   regress0/bv2nat-logic.smt2
   regress0/bv-conv-value-refine.smt2
+  regress0/bv/abstract/abv-mul-select-operand.smt2
+  regress0/bv/abstract/abv-sat-mul-select.smt2
+  regress0/bv/abstract/abv-select-index.smt2
   regress0/bv/abstract/bv_udiv_pow2.smt2
   regress0/bv/abstract/bv_urem_pow2.smt2
   regress0/bv/abstract/cross-term-div-mul-rem.smt2
@@ -4079,6 +4082,7 @@ set(regress_2_tests
   regress2/bug674.smt2
   regress2/bug765.smt2
   regress2/bug812.smt2
+  regress2/bv/abstract/abv-klee-select-index.smt2
   regress2/bv/opStructure_MBA_6.scrambled.min.smt2
   regress2/bv_to_int2.smt2
   regress2/bv_to_int_5095.smt2
