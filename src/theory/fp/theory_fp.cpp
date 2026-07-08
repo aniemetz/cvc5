@@ -149,6 +149,134 @@ TrustNode TheoryFp::ppRewrite(TNode node,
   return TrustNode::null();
 }
 
+namespace {
+
+/**
+ * The next floating-point value strictly above f in the floating-point value
+ * order, where -0 and +0 are treated as a single value (real value 0). The
+ * result may be +infinity; f must be finite (neither NaN nor infinity).
+ */
+FloatingPoint fpSucc(const FloatingPoint& f)
+{
+  Assert(!f.isNaN() && !f.isInfinite());
+  const FloatingPointSize& sz = f.getSize();
+  BitVector packed = f.pack();
+  uint32_t w = packed.getSize();
+  const Integer& v = packed.getValue();
+  Integer signBit = Integer(1).multiplyByPow2(w - 1);
+  if (v < signBit)
+  {
+    // non-negative (including +0): increment the magnitude
+    return FloatingPoint(sz, BitVector(w, v + 1));
+  }
+  Integer mag = v - signBit;
+  if (mag <= 1)
+  {
+    // -0: the successor of the zero class is the smallest positive
+    // subnormal; -minSubnormal: the successor is the zero class
+    return mag == 0 ? FloatingPoint::makeMinSubnormal(sz, false)
+                    : FloatingPoint::makeZero(sz, false);
+  }
+  return FloatingPoint(sz, BitVector(w, signBit + (mag - 1)));
+}
+
+/**
+ * The next floating-point value strictly below f in the floating-point value
+ * order, where -0 and +0 are treated as a single value (real value 0). The
+ * result may be -infinity; f must be finite (neither NaN nor infinity).
+ */
+FloatingPoint fpPred(const FloatingPoint& f)
+{
+  Assert(!f.isNaN() && !f.isInfinite());
+  const FloatingPointSize& sz = f.getSize();
+  BitVector packed = f.pack();
+  uint32_t w = packed.getSize();
+  const Integer& v = packed.getValue();
+  Integer signBit = Integer(1).multiplyByPow2(w - 1);
+  if (v == 0 || v == signBit)
+  {
+    // +0 or -0: the predecessor of the zero class is -minSubnormal
+    return FloatingPoint::makeMinSubnormal(sz, true);
+  }
+  if (v < signBit)
+  {
+    // positive: decrement the magnitude (may reach +0, real value 0)
+    return FloatingPoint(sz, BitVector(w, v - 1));
+  }
+  // negative: increment the magnitude (may reach -infinity)
+  return FloatingPoint(sz, BitVector(w, v + 1));
+}
+
+/**
+ * Compute the exact rational threshold t0 such that for all reals x:
+ *   to_fp(rm, x) >=_fp c  iff  (strict ? x > t0 : x >= t0),
+ * i.e., the lower boundary of the rounding cell of the finite float c under
+ * rounding mode rm. Returns false if the threshold is not computable (c is
+ * NaN or infinite, or its predecessor is -infinity).
+ */
+bool roundingCellLowerBound(const FloatingPoint& c,
+                            RoundingMode rm,
+                            Rational& t0,
+                            bool& strict)
+{
+  if (c.isNaN() || c.isInfinite())
+  {
+    return false;
+  }
+  FloatingPoint p = fpPred(c);
+  if (p.isInfinite())
+  {
+    return false;
+  }
+  Rational rc = c.convertToRationalTotal(Rational(0));
+  Rational rp = p.convertToRationalTotal(Rational(0));
+  switch (rm)
+  {
+    case RoundingMode::ROUND_TOWARD_POSITIVE:
+      // x in (real(p), real(c)] rounds up to c
+      t0 = rp;
+      strict = true;
+      return true;
+    case RoundingMode::ROUND_TOWARD_NEGATIVE:
+      // x in [real(c), real(succ(c))) rounds down to c
+      t0 = rc;
+      strict = false;
+      return true;
+    case RoundingMode::ROUND_TOWARD_ZERO:
+      if (rc > 0)
+      {
+        // positive: rounds down, as for ROUND_TOWARD_NEGATIVE
+        t0 = rc;
+        strict = false;
+      }
+      else
+      {
+        // negative and zero: rounds up, as for ROUND_TOWARD_POSITIVE
+        t0 = rp;
+        strict = true;
+      }
+      return true;
+    case RoundingMode::ROUND_NEAREST_TIES_TO_EVEN:
+    {
+      // the tie (midpoint) rounds to the neighbor with even significand;
+      // the significand lsbs of adjacent packed values alternate
+      t0 = (rp + rc) / 2;
+      bool cEven = !c.pack().getValue().testBit(0);
+      strict = !cEven;
+      return true;
+    }
+    case RoundingMode::ROUND_NEAREST_TIES_TO_AWAY:
+      // the tie rounds away from zero: to c if the midpoint is positive,
+      // to p if it is negative
+      t0 = (rp + rc) / 2;
+      strict = t0 < 0;
+      return true;
+    default: return false;
+  }
+}
+
+}  // namespace
+
 bool TheoryFp::refineAbstraction(TheoryModel* m, TNode abstract, TNode concrete)
 {
   Trace("fp-refineAbstraction") << "TheoryFp::refineAbstraction(): " << abstract
@@ -371,12 +499,24 @@ bool TheoryFp::refineAbstraction(TheoryModel* m, TNode abstract, TNode concrete)
       Node correctRoundingMode = nm->mkNode(Kind::EQUAL, concrete[0], rmValue);
       // TODO : Generalise to all rounding modes  #1914
 
+      // The lemmas below only use the monotonicity direction
+      //   x >= v  -->  to_fp(rm, x) >=_fp to_fp(rm, v)
+      // (and dually for <=). The converse direction is NOT valid: rounding
+      // is monotone but not injective, so to_fp(rm, x) >=_fp to_fp(rm, v)
+      // does not imply x >= v (x slightly below v may round to the same
+      // float). Asserting the equivalence excludes satisfiable regions
+      // around the model value and makes the solver refutation unsound
+      // (see issues #12370, #12780). The implications still exclude the
+      // current spurious model: if the model value of the abstraction is
+      // below (resp. above) the correct rounding, the forward (resp.
+      // backward-directed) implication is violated.
+
       // First the "forward" constraints
       Node fg = nm->mkNode(
           Kind::IMPLIES,
           correctRoundingMode,
           nm->mkNode(
-              Kind::EQUAL,
+              Kind::IMPLIES,
               {nm->mkNode(Kind::GEQ, concrete[1], realValue),
                nm->mkNode(Kind::FLOATINGPOINT_GEQ, abstract, concreteValue)}));
       handleLemma(fg, InferenceId::FP_PREPROCESS);
@@ -385,7 +525,7 @@ bool TheoryFp::refineAbstraction(TheoryModel* m, TNode abstract, TNode concrete)
           Kind::IMPLIES,
           correctRoundingMode,
           nm->mkNode(
-              Kind::EQUAL,
+              Kind::IMPLIES,
               {nm->mkNode(Kind::LEQ, concrete[1], realValue),
                nm->mkNode(Kind::FLOATINGPOINT_LEQ, abstract, concreteValue)}));
       handleLemma(fl, InferenceId::FP_PREPROCESS);
@@ -402,7 +542,7 @@ bool TheoryFp::refineAbstraction(TheoryModel* m, TNode abstract, TNode concrete)
             Kind::IMPLIES,
             correctRoundingMode,
             nm->mkNode(
-                Kind::EQUAL,
+                Kind::IMPLIES,
                 {nm->mkNode(Kind::GEQ, concrete[1], realValueOfAbstract),
                  nm->mkNode(
                      Kind::FLOATINGPOINT_GEQ, abstract, abstractValue)}));
@@ -412,12 +552,62 @@ bool TheoryFp::refineAbstraction(TheoryModel* m, TNode abstract, TNode concrete)
             Kind::IMPLIES,
             correctRoundingMode,
             nm->mkNode(
-                Kind::EQUAL,
+                Kind::IMPLIES,
                 {nm->mkNode(Kind::LEQ, concrete[1], realValueOfAbstract),
                  nm->mkNode(
                      Kind::FLOATINGPOINT_LEQ, abstract, abstractValue)}));
         handleLemma(bl, InferenceId::FP_PREPROCESS);
       }
+
+      // Cell-boundary equivalences: for a float constant c and a fixed
+      // rounding mode, to_fp(rm, x) >=_fp c holds iff x is (strictly) above
+      // the exact real lower boundary of c's rounding cell, and dually
+      // to_fp(rm, x) <=_fp c holds iff x is (strictly) below the lower
+      // boundary of the cell of c's successor. Unlike equivalences anchored
+      // at the model value of x (cf. the comment above), these are sound,
+      // and they exclude the whole spurious rounding cell in one step, which
+      // is required for the refinement loop to converge (the model value of
+      // x could otherwise slide within one cell indefinitely).
+      RoundingMode rm = rmValue.getConst<RoundingMode>();
+      auto sendCellLemmas = [&](const FloatingPoint& c) {
+        if (c.isNaN() || c.isInfinite())
+        {
+          return;
+        }
+        Node cn = nm->mkConst(c);
+        Rational lb;
+        bool lstrict;
+        if (roundingCellLowerBound(c, rm, lb, lstrict))
+        {
+          Node lower = nm->mkNode(
+              Kind::IMPLIES,
+              correctRoundingMode,
+              nm->mkNode(Kind::EQUAL,
+                         {nm->mkNode(Kind::FLOATINGPOINT_GEQ, abstract, cn),
+                          nm->mkNode(lstrict ? Kind::GT : Kind::GEQ,
+                                     concrete[1],
+                                     nm->mkConstReal(lb))}));
+          handleLemma(lower, InferenceId::FP_PREPROCESS);
+        }
+        FloatingPoint s = fpSucc(c);
+        Rational ub;
+        bool sstrict;
+        if (!s.isInfinite() && roundingCellLowerBound(s, rm, ub, sstrict))
+        {
+          // F <=_fp c  iff  not (F >=_fp succ(c))  for non-NaN F
+          Node upper = nm->mkNode(
+              Kind::IMPLIES,
+              correctRoundingMode,
+              nm->mkNode(Kind::EQUAL,
+                         {nm->mkNode(Kind::FLOATINGPOINT_LEQ, abstract, cn),
+                          nm->mkNode(sstrict ? Kind::LEQ : Kind::LT,
+                                     concrete[1],
+                                     nm->mkConstReal(ub))}));
+          handleLemma(upper, InferenceId::FP_PREPROCESS);
+        }
+      };
+      sendCellLemmas(concreteValue.getConst<FloatingPoint>());
+      sendCellLemmas(abstractValue.getConst<FloatingPoint>());
 
       return true;
     }
