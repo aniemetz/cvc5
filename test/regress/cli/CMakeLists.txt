@@ -2841,6 +2841,7 @@ set(regress_1_tests
   regress1/difficulty-polarity.smt2
   regress1/errorcrash.smt2
   regress1/fp/fp_to_real.smt2
+  regress1/fp/issue12759-fp-str-refine-values.smt2
   regress1/fp/issue8242-check-models.smt2
   regress1/fp/issue8242-fp-eq-sub-div.smt2
   regress1/fp/issue8242-fp-max-div.smt2

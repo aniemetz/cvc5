@@ -98,8 +98,11 @@ class TheoryFp : public Theory
 
   void wordBlastAndEquateTerm(TNode node);
 
-  /** Interaction with the rest of the solver **/
-  void handleLemma(Node node, InferenceId id);
+  /**
+   * Interaction with the rest of the solver.
+   * Returns true if a new (non-trivial, not previously cached) lemma was sent.
+   */
+  bool handleLemma(Node node, InferenceId id);
   /**
    * Called when literal node is inferred by the equality engine. This
    * propagates node on the output channel.
@@ -117,6 +120,14 @@ class TheoryFp : public Theory
    * Purifies operators that convert between real and floating-point.
    */
   Node purifyConversions(TNode n);
+
+  /**
+   * Purifies an argument of an abstracted conversion: non-leaf terms are
+   * replaced by a purification skolem (with the defining equality sent as a
+   * lemma) so that model values for the argument are leaf assignments and
+   * cannot be corrupted by bottom-up evaluation of unrefined subterms.
+   */
+  Node purifyArgument(TNode n);
 
   /** The terms registered via registerTerm(). */
   context::CDHashSet<Node> d_registeredTerms;
