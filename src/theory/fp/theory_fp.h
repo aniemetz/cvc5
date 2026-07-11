@@ -132,6 +132,9 @@ class TheoryFp : public Theory
   /** The terms registered via registerTerm(). */
   context::CDHashSet<Node> d_registeredTerms;
 
+  /** The arguments purified via purifyArgument(). */
+  context::CDHashSet<Node> d_purifiedArgs;
+
   /** Map abstraction skolem to abstracted FP_TO_REAL/FP_FROM_REAL node. */
   AbstractionMap d_abstractionMap;  // abstract -> original
 
