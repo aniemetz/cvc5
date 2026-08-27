@@ -187,6 +187,8 @@ const char* toString(InferenceId i)
       return "BV_BITBLAST_EAGER_LEMMA";
     case InferenceId::BV_BITBLAST_INTERNAL_BITBLAST_LEMMA:
       return "BV_BITBLAST_INTERNAL_BITBLAST_LEMMA";
+    case InferenceId::BV_ABSTRACTION_REFINEMENT:
+      return "BV_ABSTRACTION_REFINEMENT";
     case InferenceId::BV_LAYERED_CONFLICT: return "BV_LAYERED_CONFLICT";
     case InferenceId::BV_LAYERED_LEMMA: return "BV_LAYERED_LEMMA";
     case InferenceId::BV_EXTF_LEMMA: return "BV_EXTF_LEMMA";

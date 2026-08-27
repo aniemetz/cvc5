@@ -26,63 +26,40 @@ namespace bv {
 
 /* -------------------------------------------------------------------------- */
 
-namespace {
-
-bool isBVAtom(TNode n)
-{
-  return (n.getKind() == Kind::EQUAL && n[0].getType().isBitVector())
-         || n.getKind() == Kind::BITVECTOR_ULT
-         || n.getKind() == Kind::BITVECTOR_ULE
-         || n.getKind() == Kind::BITVECTOR_SLT
-         || n.getKind() == Kind::BITVECTOR_SLE;
-}
-
-/* Traverse Boolean nodes and collect BV atoms. */
-void collectBVAtoms(TNode n, std::unordered_set<Node>& atoms)
-{
-  std::vector<TNode> visit;
-  std::unordered_set<TNode> visited;
-
-  visit.push_back(n);
-
-  do
-  {
-    TNode cur = visit.back();
-    visit.pop_back();
-
-    if (visited.find(cur) != visited.end() || !cur.getType().isBoolean())
-      continue;
-
-    visited.insert(cur);
-    if (isBVAtom(cur))
-    {
-      atoms.insert(cur);
-      continue;
-    }
-
-    visit.insert(visit.end(), cur.begin(), cur.end());
-  } while (!visit.empty());
-}
-
-}  // namespace
-
 BVSolverBitblastInternal::BVSolverBitblastInternal(
-    Env& env, TheoryState* s, TheoryInferenceManager& inferMgr)
+    Env& env, TheoryState* s, TheoryInferenceManager& inferMgr, TheoryBV* bv)
     : BVSolver(env, *s, inferMgr),
       d_bitblaster(new BBProof(env, s, false)),
-      d_epg(new EagerProofGenerator(d_env))
+      d_epg(new EagerProofGenerator(d_env)),
+      d_am(options().bv.bvAbstraction ? new abstract::AbstractionModule(env, bv)
+                                      : nullptr),
+      d_isModelConsistent(true)
 {
+  // Abstraction is not supported with proofs yet: the bit-blasting lemma
+  // relates the original atom to the bit-blasting of its abstraction, which
+  // the bit-blasting proof generator cannot justify. Option --bv-abstraction is
+  // disabled if proofs are enabled, see SetDefaults::incompatibleWithProofs().
+  AlwaysAssert(d_am == nullptr || !d_env.isTheoryProofProducing())
+      << "bit-vector abstraction is not supported with proofs";
 }
 
 void BVSolverBitblastInternal::addBBLemma(TNode fact)
 {
-  if (!d_bitblaster->hasBBAtom(fact))
+  // Abstract arithmetic subterms before bit-blasting; the fresh abstraction
+  // constants are bit-blasted as variables, so the multiplier/divider circuits
+  // are never built. Note that the left-hand side of the lemma below is the
+  // original atom `fact`: that is the literal the SAT solver decides and the
+  // term the equality engine reasons about, only the circuit it is equivalent
+  // to is abstracted. This over-approximates and is refined in postCheck().
+  Node afact = d_am ? d_am->abstract(fact) : Node(fact);
+
+  if (!d_bitblaster->hasBBAtom(afact))
   {
-    d_bitblaster->bbAtom(fact);
+    d_bitblaster->bbAtom(afact);
   }
   NodeManager* nm = nodeManager();
 
-  Node atom_bb = d_bitblaster->getStoredBBAtom(fact);
+  Node atom_bb = d_bitblaster->getStoredBBAtom(afact);
   Node lemma = nm->mkNode(Kind::EQUAL, fact, atom_bb);
 
   if (!d_env.isTheoryProofProducing())
@@ -103,6 +80,53 @@ bool BVSolverBitblastInternal::needsEqualityEngine(CVC5_UNUSED EeSetupInfo& esi)
   return options().bv.bitblastMode != options::BitblastMode::EAGER;
 }
 
+void BVSolverBitblastInternal::postCheck(Theory::Effort level)
+{
+  // Only refine at full effort: at standard effort the propositional model is
+  // partial and refining against it is wasted work.
+  if (d_am == nullptr || level != Theory::Effort::EFFORT_FULL)
+  {
+    return;
+  }
+
+  if (d_state.isInConflict())
+  {
+    // The current model is irrelevant, the solver will backtrack.
+    d_isModelConsistent = false;
+    return;
+  }
+
+  // CEGAR refinement: check the current model against the abstracted
+  // arithmetic terms and send the violated refinement lemmas. In contrast to
+  // BVSolverBitblast, which bit-blasts to a SAT solver instance that is local
+  // to the solver and thus runs its own refinement loop, we send the lemmas to
+  // the inference manager and do a single refinement round per check. The
+  // CDCL(T) loop of the theory engine is the refinement loop: as long as we
+  // send lemmas, the engine will not conclude sat (and will not compute care
+  // graphs or build a model based on an inconsistent model value).
+  std::vector<Node> lemmas;
+  d_am->check(lemmas);
+  d_isModelConsistent = lemmas.empty();
+  if (d_isModelConsistent)
+  {
+    Assert(d_am->isModelConsistent()) << "BV abstraction reported a consistent "
+                                         "model but the model is inconsistent "
+                                         "with an abstracted term";
+    return;
+  }
+  Trace("bv-abstraction") << "postCheck: adding " << lemmas.size()
+                          << " lemma(s)" << std::endl;
+  bool sent = false;
+  for (const Node& lem : lemmas)
+  {
+    sent |= d_im.lemma(lem, InferenceId::BV_ABSTRACTION_REFINEMENT);
+  }
+  // The abstraction module only ever adds lemmas that were not added before,
+  // hence the inference manager cannot have dropped all of them as duplicates.
+  // If it did, we would report an inconsistent model as sat.
+  AlwaysAssert(sent) << "BV abstraction did not make progress";
+}
+
 bool BVSolverBitblastInternal::preNotifyFact(CVC5_UNUSED TNode atom,
                                              CVC5_UNUSED bool pol,
                                              CVC5_UNUSED TNode fact,
@@ -114,7 +138,7 @@ bool BVSolverBitblastInternal::preNotifyFact(CVC5_UNUSED TNode atom,
     fact = fact[0];
   }
 
-  if (isBVAtom(fact))
+  if (utils::isBVAtom(fact))
   {
     addBBLemma(fact);
   }
@@ -137,7 +161,7 @@ bool BVSolverBitblastInternal::preNotifyFact(CVC5_UNUSED TNode atom,
     }
 
     std::unordered_set<Node> bv_atoms;
-    collectBVAtoms(n, bv_atoms);
+    utils::collectBVAtoms(n, bv_atoms);
     for (const Node& nn : bv_atoms)
     {
       addBBLemma(nn);

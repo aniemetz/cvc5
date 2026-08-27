@@ -27,9 +27,8 @@ cvc5 1.3.5 prerelease
   https://doi.org/10.1007/978-3-031-65627-9_9).
   Enable with option `--bv-abstraction`, the minimum bit-width of relevant terms
   to abstract can be configured via option `--bv-abstraction-size`.
-  Right now, this is *not* supported in combination with option
-  `--bv-solver=bitblast-internal` (enabling option `--bv-abstraction` has no
-  effect).
+  Right now, this is *not* supported in combination with proofs (option
+  `--bv-abstraction` is disabled if proofs are enabled).
 
 - CPC proofs now always end with a `step` command. Previously, when `false` was
   directly an input assertion, the proof would instead end with an `assume`
