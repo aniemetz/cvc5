@@ -1,4 +1,5 @@
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-solver=bitblast-internal
 ; EXPECT: unsat
 ; DISABLE-TESTER: proof
 ; KLEE-generated QF_ABV query (symbolic-execution array reads with a

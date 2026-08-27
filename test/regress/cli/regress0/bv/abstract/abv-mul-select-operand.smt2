@@ -1,4 +1,5 @@
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-solver=bitblast-internal
 ; EXPECT: unsat
 ; DISABLE-TESTER: proof
 ; The abstracted 64-bit bvmul has an array select inside its operand: the

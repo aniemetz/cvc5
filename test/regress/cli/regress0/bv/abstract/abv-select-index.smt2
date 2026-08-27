@@ -1,4 +1,5 @@
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-solver=bitblast-internal
 ; EXPECT: unsat
 ; DISABLE-TESTER: proof
 ; QF_ABV coverage for the shape that exposed abstraction below foreign-theory

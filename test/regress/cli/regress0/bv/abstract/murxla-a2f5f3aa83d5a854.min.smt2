@@ -1,4 +1,5 @@
 ; COMMAND-LINE: --bv-abstraction
+; COMMAND-LINE: --bv-abstraction --bv-solver=bitblast-internal
 ; EXPECT: sat
 ; Ported from Bitwuzla test/regress/solver/abstract/murxla-a2f5f3aa83d5a854.min.smt2
 (set-logic ALL)

@@ -1,4 +1,5 @@
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-solver=bitblast-internal
 ; EXPECT: sat
 ; Satisfiable variant of the QF_ABV abstraction tests: the abstracted bvmul
 ; both takes a select in its operand and feeds a select index. Checks that the

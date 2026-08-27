@@ -1,4 +1,5 @@
 ; COMMAND-LINE: --bv-abstraction
+; COMMAND-LINE: --bv-abstraction --bv-solver=bitblast-internal
 ; EXPECT: sat
 ; Ported from Bitwuzla test/regress/solver/abstract/red-bench-8002.smt2
 (set-logic QF_BV)

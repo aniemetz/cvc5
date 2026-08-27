@@ -304,16 +304,20 @@ set(regress_0_tests
   regress0/bv/abstract/abv-mul-select-operand.smt2
   regress0/bv/abstract/abv-sat-mul-select.smt2
   regress0/bv/abstract/abv-select-index.smt2
+  regress0/bv/abstract/bitblast-eager.smt2
   regress0/bv/abstract/bv_udiv_pow2.smt2
   regress0/bv/abstract/bv_urem_pow2.smt2
   regress0/bv/abstract/cross-term-div-mul-rem.smt2
   regress0/bv/abstract/eagerrefine1.smt2
+  regress0/bv/abstract/incremental-refine.smt2
   regress0/bv/abstract/issue9874.smt2
+  regress0/bv/abstract/model-mul.smt2
   regress0/bv/abstract/murxla-346218efd24c9aba.min.smt2
   regress0/bv/abstract/murxla-67f411058e7b0ea7.min.smt2
   regress0/bv/abstract/murxla-a2f5f3aa83d5a854.min.smt2
   regress0/bv/abstract/murxla-cc7db96bcf2e620d.min.smt2
   regress0/bv/abstract/murxla-d9523963f3a24521.min.smt2
+  regress0/bv/abstract/proofs-disabled.smt2
   regress0/bv/abstract/red-bench-8002.smt2
   regress0/bv/abstract/sat-mul-refine.smt2
   regress0/bv/abstract/unsatcore1.smt2
