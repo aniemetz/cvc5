@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-abstraction-value-limiter=100
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-abstraction-value-limiter=100 --bv-solver=bitblast-internal
 ; EXPECT: sat
 ; Forces the tier-4 bit-blasting fallback on a binarized chain: the tier-3
 ; value-instantiation budget is bit-width/100 = 0, so any chain element that

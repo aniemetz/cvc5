@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-solver=bitblast-internal
 ; EXPECT: sat
 ; Two n-ary multiplications sharing a prefix. Since the chain elements are
 ; cached, the abstraction constant introduced for (bvmul a b) is shared by both

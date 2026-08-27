@@ -12,8 +12,6 @@
 
 #include "theory/bv/abstract/abstraction_module.h"
 
-#include <algorithm>
-
 #include "expr/node_manager.h"
 #include "options/bv_options.h"
 #include "smt/env.h"
@@ -31,6 +29,8 @@ AbstractionModule::AbstractionModule(Env& env, TheoryBV* bv)
       d_absSize(options().bv.bvAbstractionSize),
       d_valLimiter(options().bv.bvAbstractionValueLimiter),
       d_lemmas(nodeManager()),
+      d_bitblasted(userContext()),
+      d_added(userContext()),
       d_stats(statisticsRegistry())
 {
 }
@@ -48,7 +48,9 @@ AbstractionModule::Statistics::Statistics(StatisticsRegistry& reg)
       d_numLemmasTier3(
           reg.registerInt("theory::bv::abstraction::numLemmasTier3")),
       d_numLemmasTier4(
-          reg.registerInt("theory::bv::abstraction::numLemmasTier4"))
+          reg.registerInt("theory::bv::abstraction::numLemmasTier4")),
+      d_numLemmasSuppressed(
+          reg.registerInt("theory::bv::abstraction::numLemmasSuppressed"))
 {
 }
 
@@ -111,6 +113,19 @@ Node AbstractionModule::binarize(TNode node)
 
 Node AbstractionModule::abstract(TNode fact)
 {
+  // Refinement lemmas are asserted in their final form, their atoms must not
+  // be abstracted (see d_noAbstract).
+  //
+  // Note that this is only required for BvSolverBitblastInternal: when the
+  // main SAT solver asserts one of the lemma's atoms, it arrives through
+  // preNotifyFact like any other fact and abstract() is applied before bit
+  // blasting. With BvSolverBitblast the lemmas never leave the solver (they
+  // do not go through d_im.lemma()).
+  if (d_noAbstract.find(fact) != d_noAbstract.end())
+  {
+    return fact;
+  }
+
   NodeManager* nm = nodeManager();
   std::vector<TNode> visit{fact};
   do
@@ -166,7 +181,43 @@ Node AbstractionModule::abstract(TNode fact)
     }
     visit.pop_back();
   } while (!visit.empty());
-  return d_cache.at(fact);
+
+  Node afact = d_cache.at(fact);
+  // Abstracting must not make a fact trivially true or false. This would
+  // happen for the atoms of refinement lemmas, e.g., the tier-4 lemma
+  // `t = op(x, s)` collapses to `t = t`. These are guarded by d_noAbstract
+  // above, this is a safety net in case such an atom reaches us in a form we
+  // did not record (e.g., reshaped by theory preprocessing of the lemma).
+  //
+  // Note that if `fact` itself is not trivial, not abstracting it is sound (it
+  // only means that we bit-blast the corresponding circuit).
+  if (afact.isConst() && !rewrite(fact).isConst())
+  {
+    Trace("bv-abstraction")
+        << "abstract: not abstracting " << fact << " (would collapse to "
+        << afact << ")" << std::endl;
+    return fact;
+  }
+  return afact;
+}
+
+bool AbstractionModule::isAdded(const Node& lemma)
+{
+  return d_added.contains(rewrite(lemma));
+}
+
+void AbstractionModule::addLemma(std::vector<Node>& lemmas, const Node& lemma)
+{
+  Node rlemma = rewrite(lemma);
+  Assert(!d_added.contains(rlemma));
+  d_added.insert(rlemma);
+  // Record the atoms of the lemma as not to be abstracted. We record the atoms
+  // of its rewritten form since a solver that sends the lemma to the inference
+  // manager gets its (preprocessed, thus rewritten) atoms back as asserted
+  // facts. Atoms of the lemma as constructed either rewrite to themselves or
+  // never reach the SAT solver in that form.
+  utils::collectBVAtoms(rlemma, d_noAbstract);
+  lemmas.push_back(lemma);
 }
 
 void AbstractionModule::check(std::vector<Node>& lemmas)
@@ -180,6 +231,16 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
   {
     Assert(abstractable(n));
     Assert(n.getNumChildren() == 2);
+    // A term that was refined via tier 4 is fully constrained by the
+    // bit-blasted circuit, there is nothing left to refine. Note that such a
+    // term may still look inconsistent below if the current assignment does
+    // not reflect the circuit yet (it is bit-blasted lazily, in the round in
+    // which the tier-4 atom is first asserted), in which case adding further
+    // lemmas would not make progress.
+    if (d_bitblasted.contains(t))
+    {
+      continue;
+    }
     Kind kind = n.getKind();
     TNode x = n[0];
     TNode s = n[1];
@@ -228,7 +289,15 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
           inst.substitute(args.begin(), args.end(), vals.begin(), vals.end());
       if (rewrite(subst) == falseNode)
       {
-        lemmas.push_back(inst);
+        // Skip schemes that were already added for this term. They cannot rule
+        // out any model that was not ruled out before, thus adding them again
+        // would not make progress. Continue with the next violated scheme.
+        if (isAdded(inst))
+        {
+          ++d_stats.d_numLemmasSuppressed;
+          continue;
+        }
+        addLemma(lemmas, inst);
         violated = true;
         break;
       }
@@ -246,20 +315,26 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
     if (d_valueInstCount[t] < budget)
     {
       // Tier 3: value instantiation.
-      lemmas.push_back(
+      Node lemma =
           nm->mkNode(Kind::IMPLIES,
                      {nm->mkNode(Kind::AND, {x.eqNode(xval), s.eqNode(sval)}),
-                      t.eqNode(value)}));
-      ++d_valueInstCount[t];
-      ++d_stats.d_numLemmasTier3;
+                      t.eqNode(value)});
+      if (!isAdded(lemma))
+      {
+        addLemma(lemmas, lemma);
+        ++d_valueInstCount[t];
+        ++d_stats.d_numLemmasTier3;
+        continue;
+      }
+      // We already added this value instantiation, escalate to tier 4 instead
+      // of not making progress.
+      ++d_stats.d_numLemmasSuppressed;
     }
-    else
-    {
-      // Tier 4: bit-blasting fallback. Assert t = op(x, s), forcing the real
-      // circuit to be bit-blasted; `t` is fully constrained from now on.
-      lemmas.push_back(t.eqNode(nm->mkNode(kind, x, s)));
-      ++d_stats.d_numLemmasTier4;
-    }
+    // Tier 4: bit-blasting fallback. Assert t = op(x, s), forcing the real
+    // circuit to be bit-blasted; `t` is fully constrained from now on.
+    addLemma(lemmas, t.eqNode(nm->mkNode(kind, x, s)));
+    d_bitblasted.insert(t);
+    ++d_stats.d_numLemmasTier4;
   }
 }
 

@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-solver=bitblast-internal
 ; EXPECT: sat
 ; A satisfiable n-ary multiplication (a * b * c = 30 with a, b, c > 1).
 ; BITVECTOR_MULT is n-ary in cvc5, whereas the Table-2 lemma schemes are

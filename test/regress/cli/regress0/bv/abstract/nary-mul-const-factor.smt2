@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=3 --bv-solver=bitblast-internal
 ; EXPECT: sat
 ; An n-ary multiplication with a (non-power-of-two) constant factor. The
 ; rewriter folds all constant factors into a single one and sorts it last, so

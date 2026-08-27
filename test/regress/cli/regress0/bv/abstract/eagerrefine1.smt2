@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction
+; COMMAND-LINE: --bv-abstraction --bv-solver=bitblast-internal
 ; EXPECT: unsat
 ; DISABLE-TESTER: proof
 ; Ported from Bitwuzla test/regress/solver/abstract/eagerrefine1.smt2

@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction
+; COMMAND-LINE: --bv-abstraction --bv-solver=bitblast-internal
 ; EXPECT: unsat
 ; DISABLE-TESTER: proof
 ; Ported from Bitwuzla test/regress/solver/abstract/murxla-cc7db96bcf2e620d.min.smt2
