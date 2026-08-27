@@ -18,12 +18,15 @@
 
 #include "proof/eager_proof_generator.h"
 #include "smt/env_obj.h"
+#include "theory/bv/abstract/abstraction_module.h"
 #include "theory/bv/bitblast/proof_bitblaster.h"
 #include "theory/bv/bv_solver.h"
 
 namespace cvc5::internal {
 namespace theory {
 namespace bv {
+
+class TheoryBV;
 
 /**
  * Bit-blasting solver that sends bit-blasting lemmas directly to the
@@ -37,12 +40,15 @@ class BVSolverBitblastInternal : public BVSolver
  public:
   BVSolverBitblastInternal(Env& env,
                            TheoryState* state,
-                           TheoryInferenceManager& inferMgr);
+                           TheoryInferenceManager& inferMgr,
+                           TheoryBV* bv);
   ~BVSolverBitblastInternal() = default;
 
   bool needsEqualityEngine(EeSetupInfo& esi) override;
 
   void preRegisterTerm(CVC5_UNUSED TNode n) override {}
+
+  void postCheck(Theory::Effort level) override;
 
   bool preNotifyFact(TNode atom,
                      bool pol,
@@ -59,6 +65,8 @@ class BVSolverBitblastInternal : public BVSolver
 
   Node getValue(TNode node, bool initialize) override;
 
+  bool isModelConsistent() const override { return d_isModelConsistent; }
+
  private:
   /**
    * Sends a bit-blasting lemma fact <=> d_bitblaster.bbAtom(fact) to the
@@ -70,6 +78,15 @@ class BVSolverBitblastInternal : public BVSolver
   std::unique_ptr<BBProof> d_bitblaster;
   /** Proof generator for unpacking BITVECTOR_EAGER_ATOM. */
   std::unique_ptr<EagerProofGenerator> d_epg;
+
+  /** The associated CEGAR abstraction module for bit-vector arithmetic. */
+  std::unique_ptr<abstract::AbstractionModule> d_am;
+
+  /**
+   * Cache if current model is consistent. Can only ever be inconsistent in the
+   * case of abstraction.
+   */
+  bool d_isModelConsistent;
 };
 
 }  // namespace bv

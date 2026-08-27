@@ -144,7 +144,7 @@ name   = "Bitvector Theory"
   long       = "bv-abstraction"
   type       = "bool"
   default    = "false"
-  help       = "enable CEGAR abstraction-refinement for bit-vector arithmetic (bvmul/bvudiv/bvurem), only with --bv-solver=bitblast"
+  help       = "enable CEGAR abstraction-refinement for bit-vector arithmetic (bvmul/bvudiv/bvurem), not supported with proofs"
 
 [[option]]
   name       = "bvAbstractionSize"

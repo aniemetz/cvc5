@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction --produce-unsat-cores
+; COMMAND-LINE: --bv-abstraction --produce-unsat-cores --bv-solver=bitblast-internal
 ; EXPECT: unsat
 ; DISABLE-TESTER: proof
 ; Ported from Bitwuzla test/regress/solver/abstract/unsatcore1.smt2

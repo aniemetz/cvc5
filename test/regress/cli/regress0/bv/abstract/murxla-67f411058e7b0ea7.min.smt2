@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction --incremental
+; COMMAND-LINE: --bv-abstraction --incremental --bv-solver=bitblast-internal
 ; EXPECT: sat
 ; EXPECT: sat
 ; Ported from Bitwuzla test/regress/solver/abstract/murxla-67f411058e7b0ea7.min.smt2

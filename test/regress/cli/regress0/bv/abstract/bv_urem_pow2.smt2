@@ -1,5 +1,6 @@
 ; REQUIRES: unrestricted-mode
 ; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=16
+; COMMAND-LINE: --bv-abstraction --bv-abstraction-size=16 --bv-solver=bitblast-internal
 ; EXPECT: unsat
 ; DISABLE-TESTER: proof
 ; Ported from Bitwuzla test/regress/solver/abstract/bv_urem_pow2.smt2
