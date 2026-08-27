@@ -1132,6 +1132,14 @@ bool SetDefaults::incompatibleWithProofs(Options& opts,
     // this is an expert option, ok to silently change
     SET_AND_NOTIFY_VAL_SYM(bv, bvAssertInput, false, "proofs");
   }
+  // Bit-vector abstraction is not supported with theory proofs yet: the
+  // bit-blasting lemma relates an atom to the bit-blasting of its abstraction,
+  // which the bit-blasting proof generator cannot justify.
+  if (isFullPf && opts.bv.bvAbstraction)
+  {
+    // this is an expert option, ok to silently change
+    SET_AND_NOTIFY(bv, bvAbstraction, false, "proofs");
+  }
   // If proofs are required and the user did not specify a specific BV solver,
   // we make sure to use the proof producing BITBLAST_INTERNAL solver.
   if (isFullPf)
