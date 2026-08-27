@@ -29,7 +29,9 @@
 #define CVC5__THEORY__BV__ABSTRACT__BV_ABSTRACTION_H
 
 #include <unordered_map>
+#include <unordered_set>
 
+#include "context/cdhashset.h"
 #include "expr/node.h"
 #include "smt/env_obj.h"
 #include "theory/bv/abstract/abstraction_lemmas.h"
@@ -111,6 +113,25 @@ class AbstractionModule : protected EnvObj
    */
   Node abstractNode(TNode node);
 
+  /**
+   * @return True if given refinement lemma was already added. Note that this
+   *         determines equality modulo rewriting, which corresponds to how the
+   *         inference manager identifies duplicate lemmas.
+   */
+  bool wasAdded(const Node& lemma);
+
+  /**
+   * Add a refinement lemma to the lemmas collected by check(), and record it
+   * as added.
+   *
+   * Records the atoms of `lemma` as terms that must not be abstracted, see
+   * `d_noAbstract`.
+   *
+   * @param lemmas The refinement lemmas collected so far.
+   * @param lemma  The refinement lemma to add.
+   */
+  void addLemma(std::vector<Node>& lemmas, const Node& lemma);
+
   /** The associated bit-vector theory engine. */
   TheoryBV* d_bv;
 
@@ -142,6 +163,37 @@ class AbstractionModule : protected EnvObj
    */
   std::unordered_map<Node, uint64_t> d_valueInstCount;
 
+  /**
+   * The atoms of the refinement lemmas added so far. These must never be
+   * abstracted: refinement lemmas are asserted in their final form, and
+   * abstracting them would, e.g., turn the tier-4 lemma `t = op(x, s)` into
+   * the tautology `t = t`. Note that a solver that asserts refinement lemmas
+   * via the inference manager gets the atoms of these lemmas back as asserted
+   * facts, which are abstracted before bit-blasting.
+   *
+   * Not context-dependent: never abstracting an atom is always sound (it only
+   * means that the corresponding term is bit-blasted).
+   */
+  std::unordered_set<Node> d_noAbstract;
+
+  /**
+   * The abstraction constants for which the tier-4 bit-blasting lemma was
+   * added. Such a term is fully constrained and thus never refined again.
+   *
+   * Context-dependent since refinement lemmas may be retracted, in which case
+   * the tier-4 lemma has to be added again.
+   */
+  context::CDHashSet<Node> d_bitblasted;
+
+  /**
+   * The refinement lemmas added so far. Used to guarantee that each call to
+   * check() that determines that the model is inconsistent adds at least one
+   * lemma that was not added before, i.e., that refinement makes progress.
+   *
+   * Context-dependent, see `d_bitblasted`.
+   */
+  context::CDHashSet<Node> d_emitted;
+
   /** Statistics for the abstraction module. */
   struct Statistics
   {
@@ -156,6 +208,12 @@ class AbstractionModule : protected EnvObj
     IntStat d_numLemmasTier3;
     /** Number of tier-4 bit-blasting fallback lemmas added. */
     IntStat d_numLemmasTier4;
+    /**
+     * Number of refinement lemmas that were not added again since they were
+     * added before (which can happen if the model does not assign all bits of
+     * an abstracted term, in which case the value queries zero-fill).
+     */
+    IntStat d_numLemmasSuppressed;
   } d_stats;
 };
 

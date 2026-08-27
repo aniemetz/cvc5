@@ -211,6 +211,43 @@ bool isBitblastAtom(Node lit)
   return atom.getKind() != Kind::EQUAL || atom[0].getType().isBitVector();
 }
 
+bool isBVAtom(TNode n)
+{
+  return (n.getKind() == Kind::EQUAL && n[0].getType().isBitVector())
+         || n.getKind() == Kind::BITVECTOR_ULT
+         || n.getKind() == Kind::BITVECTOR_ULE
+         || n.getKind() == Kind::BITVECTOR_SLT
+         || n.getKind() == Kind::BITVECTOR_SLE;
+}
+
+void collectBVAtoms(TNode n, NodeSet& atoms)
+{
+  std::vector<TNode> visit;
+  std::unordered_set<TNode> visited;
+
+  visit.push_back(n);
+
+  do
+  {
+    TNode cur = visit.back();
+    visit.pop_back();
+
+    if (visited.find(cur) != visited.end() || !cur.getType().isBoolean())
+    {
+      continue;
+    }
+
+    visited.insert(cur);
+    if (isBVAtom(cur))
+    {
+      atoms.insert(cur);
+      continue;
+    }
+
+    visit.insert(visit.end(), cur.begin(), cur.end());
+  } while (!visit.empty());
+}
+
 /* ------------------------------------------------------------------------- */
 
 Node mkTrue(NodeManager* nm) { return nm->mkConst<bool>(true); }

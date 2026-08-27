@@ -82,6 +82,14 @@ bool isEqualityTerm(TNode term, TNodeBoolMap& cache);
 /* Returns true if given node is an atom that is bit-blasted.  */
 bool isBitblastAtom(Node lit);
 
+/* Returns true if given node is a bit-vector atom, i.e., an equality over
+ * bit-vector terms or a bit-vector inequality. */
+bool isBVAtom(TNode n);
+
+/* Traverse the Boolean structure of given node and collect all bit-vector
+ * atoms it contains. */
+void collectBVAtoms(TNode n, NodeSet& atoms);
+
 /* Create Boolean node representing true. */
 Node mkTrue(NodeManager* nm);
 /* Create Boolean node representing false. */

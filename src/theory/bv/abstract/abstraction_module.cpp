@@ -31,6 +31,8 @@ AbstractionModule::AbstractionModule(Env& env, TheoryBV* bv)
       d_absSize(options().bv.bvAbstractionSize),
       d_valLimiter(options().bv.bvAbstractionValueLimiter),
       d_lemmas(nodeManager()),
+      d_bitblasted(userContext()),
+      d_emitted(userContext()),
       d_stats(statisticsRegistry())
 {
 }
@@ -44,7 +46,9 @@ AbstractionModule::Statistics::Statistics(StatisticsRegistry& reg)
       d_numLemmasTier3(
           reg.registerInt("theory::bv::abstraction::numLemmasTier3")),
       d_numLemmasTier4(
-          reg.registerInt("theory::bv::abstraction::numLemmasTier4"))
+          reg.registerInt("theory::bv::abstraction::numLemmasTier4")),
+      d_numLemmasSuppressed(
+          reg.registerInt("theory::bv::abstraction::numLemmasSuppressed"))
 {
 }
 
@@ -88,6 +92,15 @@ Node AbstractionModule::abstractNode(TNode node)
 
 Node AbstractionModule::abstract(TNode fact)
 {
+  // Refinement lemmas are asserted in their final form, their atoms must not
+  // be abstracted (see d_noAbstract). Note that we return before touching
+  // d_cache: even if `fact` was abstracted before (as an input atom), not
+  // abstracting it here is the conservative direction.
+  if (d_noAbstract.find(fact) != d_noAbstract.end())
+  {
+    return fact;
+  }
+
   NodeManager* nm = nodeManager();
   std::vector<TNode> visit{fact};
   do
@@ -139,7 +152,43 @@ Node AbstractionModule::abstract(TNode fact)
     }
     visit.pop_back();
   } while (!visit.empty());
-  return d_cache.at(fact);
+
+  Node afact = d_cache.at(fact);
+  // Abstracting must not make a fact trivially true or false. This would
+  // happen for the atoms of refinement lemmas, e.g., the tier-4 lemma
+  // `t = op(x, s)` collapses to `t = t`. These are guarded by d_noAbstract
+  // above, this is a safety net in case such an atom reaches us in a form we
+  // did not record (e.g., with its arguments reordered by rewriting).
+  //
+  // Note that if `fact` itself is not trivial, not abstracting it is sound (it
+  // only means that we bit-blast the corresponding circuit).
+  if (afact.isConst() && !rewrite(fact).isConst())
+  {
+    Trace("bv-abstraction") << "abstract: not abstracting " << fact
+                            << " (would collapse to " << afact << ")"
+                            << std::endl;
+    return fact;
+  }
+  return afact;
+}
+
+bool AbstractionModule::wasAdded(const Node& lemma)
+{
+  return d_emitted.contains(rewrite(lemma));
+}
+
+void AbstractionModule::addLemma(std::vector<Node>& lemmas, const Node& lemma)
+{
+  Node rlemma = rewrite(lemma);
+  Assert(!d_emitted.contains(rlemma));
+  d_emitted.insert(rlemma);
+  // Record the atoms of the lemma as not to be abstracted. We record the atoms
+  // of both the lemma and its rewritten form since a solver that sends the
+  // lemma to the inference manager gets its (preprocessed, thus rewritten)
+  // atoms back as asserted facts.
+  utils::collectBVAtoms(lemma, d_noAbstract);
+  utils::collectBVAtoms(rlemma, d_noAbstract);
+  lemmas.push_back(lemma);
 }
 
 void AbstractionModule::check(std::vector<Node>& lemmas)
@@ -152,6 +201,15 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
   for (const auto& [t, n] : d_abs2node)
   {
     Assert(abstractable(n));
+    // A term that was refined via tier 4 is fully constrained by the
+    // bit-blasted circuit, there is nothing left to refine. Note that such a
+    // term may still look inconsistent below if the current model does not
+    // assign all bits of the circuit (the value queries zero-fill in that
+    // case), in which case adding further lemmas would not make progress.
+    if (d_bitblasted.contains(t))
+    {
+      continue;
+    }
     Kind kind = n.getKind();
     TNode x = n[0];
     TNode s = n[1];
@@ -200,7 +258,15 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
           inst.substitute(args.begin(), args.end(), vals.begin(), vals.end());
       if (rewrite(subst) == falseNode)
       {
-        lemmas.push_back(inst);
+        // Skip schemes that were already added for this term. They cannot rule
+        // out any model that was not ruled out before, thus adding them again
+        // would not make progress. Continue with the next violated scheme.
+        if (wasAdded(inst))
+        {
+          ++d_stats.d_numLemmasSuppressed;
+          continue;
+        }
+        addLemma(lemmas, inst);
         violated = true;
         break;
       }
@@ -218,20 +284,26 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
     if (d_valueInstCount[t] < budget)
     {
       // Tier 3: value instantiation.
-      lemmas.push_back(
+      Node lemma =
           nm->mkNode(Kind::IMPLIES,
                      {nm->mkNode(Kind::AND, {x.eqNode(xval), s.eqNode(sval)}),
-                      t.eqNode(value)}));
-      ++d_valueInstCount[t];
-      ++d_stats.d_numLemmasTier3;
+                      t.eqNode(value)});
+      if (!wasAdded(lemma))
+      {
+        addLemma(lemmas, lemma);
+        ++d_valueInstCount[t];
+        ++d_stats.d_numLemmasTier3;
+        continue;
+      }
+      // We already added this value instantiation, escalate to tier 4 instead
+      // of not making progress.
+      ++d_stats.d_numLemmasSuppressed;
     }
-    else
-    {
-      // Tier 4: bit-blasting fallback. Assert t = op(x, s), forcing the real
-      // circuit to be bit-blasted; `t` is fully constrained from now on.
-      lemmas.push_back(t.eqNode(nm->mkNode(kind, x, s)));
-      ++d_stats.d_numLemmasTier4;
-    }
+    // Tier 4: bit-blasting fallback. Assert t = op(x, s), forcing the real
+    // circuit to be bit-blasted; `t` is fully constrained from now on.
+    addLemma(lemmas, t.eqNode(nm->mkNode(kind, x, s)));
+    d_bitblasted.insert(t);
+    ++d_stats.d_numLemmasTier4;
   }
 }
 
