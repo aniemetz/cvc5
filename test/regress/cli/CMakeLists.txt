@@ -326,6 +326,7 @@ set(regress_0_tests
   regress0/bv/abstract/sat-nary-mul-refine.smt2
   regress0/bv/abstract/shared-term-array-index.smt2
   regress0/bv/abstract/tier4-lemma-not-abstracted.smt2
+  regress0/bv/abstract/tier4-theoryof-term.smt2
   regress0/bv/abstract/unsat-nary-mul-odd.smt2
   regress0/bv/abstract/unsatcore1.smt2
   regress0/bv/ackermann1.smt2

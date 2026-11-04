@@ -460,7 +460,11 @@ prop::SatValue BVSolverBitblast::refine(
     // loop, thus have to invalidate TheoryBV's model cache each time.
     d_bv->invalidateModelCache();
     std::vector<Node> lemmas;
-    d_am->check(lemmas);
+    // The atoms of the tier-4 lemmas need not be bit-blasted separately: we
+    // assert the lemmas to the local SAT solver below, which bit-blasts their
+    // atoms as is (it does not abstract them).
+    std::vector<Node> bbAtoms;
+    d_am->check(lemmas, bbAtoms);
     if (lemmas.empty())
     {
       // The model is consistent with all abstracted terms: genuinely sat.

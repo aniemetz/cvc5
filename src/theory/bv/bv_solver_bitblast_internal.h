@@ -71,10 +71,18 @@ class BVSolverBitblastInternal : public BVSolver
 
  private:
   /**
-   * Sends a bit-blasting lemma fact <=> d_bitblaster.bbAtom(fact) to the
-   * inference manager.
+   * Sends a bit-blasting lemma fact <=> d_bitblaster.bbAtom(afact) to the
+   * inference manager, where `afact` is the abstraction of `fact` if
+   * abstraction is enabled, and `fact` otherwise.
    */
   void addBBLemma(TNode fact);
+  /**
+   * Sends a bit-blasting lemma fact <=> d_bitblaster.bbAtom(afact) to the
+   * inference manager, where `afact` is either `fact` or its abstraction. If
+   * `afact` is a constant (e.g., the abstraction of a tier-4 atom), the lemma
+   * is fact <=> afact.
+   */
+  void addBBLemma(TNode fact, TNode afact);
 
   /** Bit-blaster used to bit-blast atoms/terms. */
   std::unique_ptr<BBProof> d_bitblaster;

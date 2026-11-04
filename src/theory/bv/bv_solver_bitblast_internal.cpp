@@ -52,15 +52,21 @@ void BVSolverBitblastInternal::addBBLemma(TNode fact)
   // original atom `fact`: that is the literal the SAT solver decides and the
   // term the equality engine reasons about, only the circuit it is equivalent
   // to is abstracted. This over-approximates and is refined in postCheck().
-  Node afact = d_am ? d_am->abstract(fact) : Node(fact);
+  addBBLemma(fact, d_am ? d_am->abstract(fact) : Node(fact));
+}
 
-  if (!d_bitblaster->hasBBAtom(afact))
+void BVSolverBitblastInternal::addBBLemma(TNode fact, TNode afact)
+{
+  Node atom_bb = afact;
+  if (!afact.isConst())
   {
-    d_bitblaster->bbAtom(afact);
+    if (!d_bitblaster->hasBBAtom(afact))
+    {
+      d_bitblaster->bbAtom(afact);
+    }
+    atom_bb = d_bitblaster->getStoredBBAtom(afact);
   }
   NodeManager* nm = nodeManager();
-
-  Node atom_bb = d_bitblaster->getStoredBBAtom(afact);
   Node lemma = nm->mkNode(Kind::EQUAL, fact, atom_bb);
 
   if (!d_env.isTheoryProofProducing())
@@ -107,11 +113,11 @@ void BVSolverBitblastInternal::postCheck(Theory::Effort level)
   {
     // We already sent lemmas in this check (the bit-blasting lemmas of the
     // facts asserted in this check), which are not reflected in the current
-    // assignment of the bits yet. In particular, the atoms of the refinement
-    // lemmas are bit-blasted lazily, when they are first asserted, thus a
-    // refinement lemma that was added before may look violated. The model
-    // will change, and since we sent lemmas the engine will not conclude sat,
-    // hence we defer refinement to the next check.
+    // assignment of the bits yet. In particular, the atoms of the tier-1/2/3
+    // refinement lemmas are bit-blasted lazily, when they are first asserted,
+    // thus a refinement lemma that was added before may look violated. The
+    // model will change, and since we sent lemmas the engine will not
+    // conclude sat, hence we defer refinement to the next check.
     Trace("bv-abstraction") << "postCheck: skipping refinement, lemmas were "
                                "sent in this check"
                             << std::endl;
@@ -127,8 +133,8 @@ void BVSolverBitblastInternal::postCheck(Theory::Effort level)
   // CDCL(T) loop of the theory engine is the refinement loop: as long as we
   // send lemmas, the engine will not conclude sat (and will not compute care
   // graphs or build a model based on an inconsistent model value).
-  std::vector<Node> lemmas;
-  d_am->check(lemmas);
+  std::vector<Node> lemmas, bbAtoms;
+  d_am->check(lemmas, bbAtoms);
   d_isModelConsistent = lemmas.empty();
   if (d_isModelConsistent)
   {
@@ -143,6 +149,17 @@ void BVSolverBitblastInternal::postCheck(Theory::Effort level)
   for (const Node& lem : lemmas)
   {
     sent |= d_im.lemma(lem, InferenceId::BV_ABSTRACTION_REFINEMENT);
+  }
+  // The atoms of the refinement lemmas come back as facts and are abstracted
+  // like any other fact. For the tier-4 lemma `t = op(x, s)`, this yields the
+  // tautology `t = t`, i.e., the circuit of `op(x, s)` is not bit-blasted from
+  // the fact. Note that with --theoryof-mode=term, the atom is not even
+  // asserted to THEORY_BV (it is owned by THEORY_UF), and we only receive
+  // equalities between shared terms in its class. Hence we bit-blast the
+  // tier-4 atoms here, as is.
+  for (const Node& atom : bbAtoms)
+  {
+    addBBLemma(atom, atom);
   }
   // The abstraction module only ever adds lemmas that were not added before,
   // hence the inference manager cannot have dropped all of them as duplicates.

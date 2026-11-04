@@ -113,19 +113,14 @@ Node AbstractionModule::binarize(TNode node)
 
 Node AbstractionModule::abstract(TNode fact)
 {
-  // Refinement lemmas are asserted in their final form, their atoms must not
-  // be abstracted (see d_noAbstract).
-  //
-  // Note that this is only required for BvSolverBitblastInternal: when the
-  // main SAT solver asserts one of the lemma's atoms, it arrives through
-  // preNotifyFact like any other fact and abstract() is applied before bit
-  // blasting. With BvSolverBitblast the lemmas never leave the solver (they
-  // do not go through d_im.lemma()).
-  if (d_noAbstract.find(fact) != d_noAbstract.end())
-  {
-    return fact;
-  }
-
+  // Note that with BVSolverBitblastInternal, the atoms of refinement lemmas
+  // come back as facts and are abstracted like any other fact. This does not
+  // affect refinement. The atoms of tier-1/2/3 lemmas contain no abstractable
+  // terms (and if they did, abstracting them would be sound, the resulting
+  // abstraction constants are refined like any other). The tier-4 atom
+  // `t = op(x, s)` becomes the tautology `t = t`, which is harmless since its
+  // circuit is not bit-blasted from the fact but when the lemma is added, see
+  // check().
   NodeManager* nm = nodeManager();
   std::vector<TNode> visit{fact};
   do
@@ -182,23 +177,7 @@ Node AbstractionModule::abstract(TNode fact)
     visit.pop_back();
   } while (!visit.empty());
 
-  Node afact = d_cache.at(fact);
-  // Abstracting must not make a fact trivially true or false. This would
-  // happen for the atoms of refinement lemmas, e.g., the tier-4 lemma
-  // `t = op(x, s)` collapses to `t = t`. These are guarded by d_noAbstract
-  // above, this is a safety net in case such an atom reaches us in a form we
-  // did not record (e.g., reshaped by theory preprocessing of the lemma).
-  //
-  // Note that if `fact` itself is not trivial, not abstracting it is sound (it
-  // only means that we bit-blast the corresponding circuit).
-  if (afact.isConst() && !rewrite(fact).isConst())
-  {
-    Trace("bv-abstraction")
-        << "abstract: not abstracting " << fact << " (would collapse to "
-        << afact << ")" << std::endl;
-    return fact;
-  }
-  return afact;
+  return d_cache.at(fact);
 }
 
 bool AbstractionModule::isAdded(const Node& lemma)
@@ -211,16 +190,11 @@ void AbstractionModule::addLemma(std::vector<Node>& lemmas, const Node& lemma)
   Node rlemma = rewrite(lemma);
   Assert(!d_added.contains(rlemma));
   d_added.insert(rlemma);
-  // Record the atoms of the lemma as not to be abstracted. We record the atoms
-  // of its rewritten form since a solver that sends the lemma to the inference
-  // manager gets its (preprocessed, thus rewritten) atoms back as asserted
-  // facts. Atoms of the lemma as constructed either rewrite to themselves or
-  // never reach the SAT solver in that form.
-  utils::collectBVAtoms(rlemma, d_noAbstract);
   lemmas.push_back(lemma);
 }
 
-void AbstractionModule::check(std::vector<Node>& lemmas)
+void AbstractionModule::check(std::vector<Node>& lemmas,
+                              std::vector<Node>& bbAtoms)
 {
   ++d_stats.d_numChecks;
   NodeManager* nm = nodeManager();
@@ -234,9 +208,9 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
     // A term that was refined via tier 4 is fully constrained by the
     // bit-blasted circuit, there is nothing left to refine. Note that such a
     // term may still look inconsistent below if the current assignment does
-    // not reflect the circuit yet (it is bit-blasted lazily, in the round in
-    // which the tier-4 atom is first asserted), in which case adding further
-    // lemmas would not make progress.
+    // not reflect the circuit yet (the circuit is added together with the
+    // tier-4 lemma, the assignment reflects it once the SAT solver processed
+    // it), in which case adding further lemmas would not make progress.
     if (d_bitblasted.contains(t))
     {
       continue;
@@ -330,9 +304,12 @@ void AbstractionModule::check(std::vector<Node>& lemmas)
       // of not making progress.
       ++d_stats.d_numLemmasSuppressed;
     }
-    // Tier 4: bit-blasting fallback. Assert t = op(x, s), forcing the real
-    // circuit to be bit-blasted; `t` is fully constrained from now on.
-    addLemma(lemmas, t.eqNode(nm->mkNode(kind, x, s)));
+    // Tier 4: bit-blasting fallback. Assert t = op(x, s), and bit-blast its
+    // atom as is, i.e., build the real circuit; `t` is fully constrained from
+    // now on.
+    Node atom = t.eqNode(nm->mkNode(kind, x, s));
+    addLemma(lemmas, atom);
+    bbAtoms.push_back(atom);
     d_bitblasted.insert(t);
     ++d_stats.d_numLemmasTier4;
   }

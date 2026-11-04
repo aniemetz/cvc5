@@ -38,7 +38,6 @@
 #define CVC5__THEORY__BV__ABSTRACT__BV_ABSTRACTION_H
 
 #include <unordered_map>
-#include <unordered_set>
 
 #include "context/cdhashset.h"
 #include "expr/node.h"
@@ -91,9 +90,20 @@ class AbstractionModule : protected EnvObj
    * violated and the allowance for adding value instantiation lemmas (tier-3)
    * has been exhausted, a bit-blasting lemma (tier-4) is added.
    *
-   * @param lemmas Output parameter, the collected refinement lemmas.
+   * A tier-4 lemma `t = op(x, s)` only constrains `t` to the actual semantics
+   * of `op` if its atom is bit-blasted as is, i.e., without abstracting
+   * `op(x, s)` (which would yield `t = t`). These atoms are additionally
+   * collected in `bbAtoms`, and it is up to the caller to bit-blast them as
+   * is. Note that the caller must not rely on the atom being asserted as a
+   * fact and then bit-blasting it: facts are abstracted, and the atom may not
+   * even be asserted to THEORY_BV (e.g., with --theoryof-mode=term, it is
+   * owned by THEORY_UF).
+   *
+   * @param lemmas  Output parameter, the collected refinement lemmas.
+   * @param bbAtoms Output parameter, the atoms of the collected tier-4 lemmas,
+   *                which must be bit-blasted without abstraction.
    */
-  void check(std::vector<Node>& lemmas);
+  void check(std::vector<Node>& lemmas, std::vector<Node>& bbAtoms);
 
   /**
    * Determine if a given node is a term that should be abstracted.
@@ -165,9 +175,6 @@ class AbstractionModule : protected EnvObj
    * Add a refinement lemma to the lemmas collected by check(), and record it
    * as added.
    *
-   * Records the atoms of the rewritten form of `lemma` as terms that must not
-   * be abstracted, see `d_noAbstract`.
-   *
    * @param lemmas The refinement lemmas collected so far.
    * @param lemma  The refinement lemma to add.
    */
@@ -209,19 +216,6 @@ class AbstractionModule : protected EnvObj
    * fallback is used instead.
    */
   std::unordered_map<Node, uint64_t> d_valueInstCount;
-
-  /**
-   * The atoms of the refinement lemmas added so far. These must never be
-   * abstracted: refinement lemmas are asserted in their final form, and
-   * abstracting them would, e.g., turn the tier-4 lemma `t = op(x, s)` into
-   * the tautology `t = t`. Note that a solver that asserts refinement lemmas
-   * via the inference manager gets the atoms of these lemmas back as asserted
-   * facts, which are abstracted before bit-blasting.
-   *
-   * Not context-dependent: never abstracting an atom is always sound (it only
-   * means that the corresponding term is bit-blasted).
-   */
-  std::unordered_set<Node> d_noAbstract;
 
   /**
    * The abstraction constants for which the tier-4 bit-blasting lemma was
