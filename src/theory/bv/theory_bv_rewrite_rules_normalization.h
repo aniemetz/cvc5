@@ -908,7 +908,8 @@ inline bool RewriteRule<NegMult>::applies(TNode node)
   {
     return false;
   }
-  return node[node.getNumChildren() - 1].isConst();
+  TNode mult = node[0];
+  return mult[mult.getNumChildren() - 1].isConst();
 }
 
 template <>

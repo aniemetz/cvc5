@@ -705,6 +705,7 @@ set(regress_0_tests
   regress0/bv/mul-neg-unsat.smt2
   regress0/bv/mul-negpow2.smt2
   regress0/bv/mult-pow2-negative.smt2
+  regress0/bv/neg-mult-const.smt2
   regress0/bv/overflow/nego1.smt2
   regress0/bv/overflow/nego2.smt2
   regress0/bv/overflow/uaddo1.smt2
